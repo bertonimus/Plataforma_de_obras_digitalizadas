@@ -21,9 +21,11 @@
           <h2 class="text-4xl font-bold text-[#E6B449]">Em Destaque</h2>
           <div class="mt-8">
             <h3 class="text-5xl font-bold text-[#E6B449] mb-6">Joanina Digital</h3>
-            <p class="text-xl text-gray-300">Uma nova plataforma com acesso aberto aos tesouros do fundo patrimonial da Biblioteca Joanina.</p>
+            <p class="text-xl text-gray-300">
+              Uma nova plataforma com acesso aberto aos tesouros do fundo patrimonial da Biblioteca Joanina.
+            </p>
           </div>
-          
+
           <!-- Stats -->
           <div class="grid grid-cols-3 gap-8 mt-12">
             <div>
@@ -40,9 +42,12 @@
             </div>
           </div>
 
-          <button class="mt-8 bg-[#E6B449] text-black px-8 py-3 rounded-md font-semibold hover:bg-[#d4a543] transition-colors">
+          <NuxtLink 
+            to="/inicio"
+            class="inline-block mt-8 bg-[#E6B449] text-black px-8 py-3 rounded-md font-semibold hover:bg-[#d4a543] transition-colors"
+          >
             Abrir Coleção
-          </button>
+          </NuxtLink>
         </div>
 
         <!-- Right Side - Image -->
