@@ -157,7 +157,7 @@
         <!-- Header com contagem e ordenação -->
         <div class="flex justify-between items-center mb-6">
           <div class="flex items-center space-x-4">
-            <h2 class="text-2xl font-bold text-white">{{ totalItems }}</h2>
+            <h2 class="text-2xl font-bold text-white">{{ filteredItemsCount }}</h2>
             <span class="text-gray-400">Itens</span>
           </div>
           <div class="flex items-center space-x-4">
@@ -197,7 +197,7 @@
         <!-- Grid de Livros -->
         <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-6">
           <NuxtLink
-            v-for="item in filteredItems" 
+            v-for="item in paginatedItems" 
             :key="item.key"
             :to="`/livro/${item.key}`"
             class="group cursor-pointer transform transition-all duration-300 hover:scale-105"
@@ -267,7 +267,7 @@
 
     <!-- Modal de Filtros Avançados -->
     <div v-if="showAdvancedFilters" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-gray-900 rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+      <div class="bg-gray-900 rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto">
         <div class="flex justify-between items-center mb-6">
           <h3 class="text-xl font-bold text-white">Filtros</h3>
           <button @click="showAdvancedFilters = false" class="text-gray-400 hover:text-white">
@@ -277,11 +277,36 @@
           </button>
         </div>
 
+        <!-- Filtros Ativos -->
+        <div class="mb-6">
+          <h4 class="text-amber-400 font-semibold mb-3">Filtros Ativos</h4>
+          <div class="flex flex-wrap gap-2">
+            <div v-for="author in filters.authors" :key="author" class="flex items-center bg-amber-600 text-white px-3 py-1 rounded-full text-sm">
+              <span class="mr-2">Autor</span>
+              <span class="mr-2 font-medium">{{ author }}</span>
+              <button @click="removeFilter('authors', author)" class="hover:bg-amber-700 rounded-full p-1">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            </div>
+            <div v-for="binder in filters.binders" :key="binder" class="flex items-center bg-amber-600 text-white px-3 py-1 rounded-full text-sm">
+              <span class="mr-2">Encadernador</span>
+              <span class="mr-2 font-medium">{{ binder }}</span>
+              <button @click="removeFilter('binders', binder)" class="hover:bg-amber-700 rounded-full p-1">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <!-- Filtro por Autor -->
           <div>
             <h4 class="text-amber-400 font-semibold mb-3">Autor</h4>
-            <div class="space-y-2 max-h-48 overflow-y-auto">
+            <div class="space-y-2 max-h-64 overflow-y-auto">
               <label 
                 v-for="author in allAuthors" 
                 :key="author.name"
@@ -304,7 +329,7 @@
           <!-- Filtro por Encadernador -->
           <div>
             <h4 class="text-amber-400 font-semibold mb-3">Encadernador</h4>
-            <div class="space-y-2 max-h-48 overflow-y-auto">
+            <div class="space-y-2 max-h-64 overflow-y-auto">
               <label 
                 v-for="binder in allBinders" 
                 :key="binder.name"
@@ -325,19 +350,68 @@
           </div>
         </div>
 
-        <div class="flex justify-between mt-6">
-          <button 
-            @click="clearFilters"
-            class="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
-          >
-            Repor
-          </button>
-          <button 
-            @click="applyFilters"
-            class="px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-500 transition-colors"
-          >
-            Aplicar
-          </button>
+        <!-- Filtros Adicionais -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+          <div>
+            <h4 class="text-amber-400 font-semibold mb-3">Data de publicação</h4>
+            <div class="text-gray-400 text-sm">1</div>
+          </div>
+          <div>
+            <h4 class="text-amber-400 font-semibold mb-3">Tipo de Item</h4>
+            <div class="text-gray-400 text-sm">1</div>
+          </div>
+          <div>
+            <h4 class="text-amber-400 font-semibold mb-3">Código de língua</h4>
+            <div class="text-gray-400 text-sm">11</div>
+          </div>
+          <div>
+            <h4 class="text-amber-400 font-semibold mb-3">Título</h4>
+            <div class="text-gray-400 text-sm">80</div>
+          </div>
+          <div>
+            <h4 class="text-amber-400 font-semibold mb-3">Local de Publicação</h4>
+            <div class="text-gray-400 text-sm">31</div>
+          </div>
+          <div>
+            <h4 class="text-amber-400 font-semibold mb-3">Autor</h4>
+            <div class="text-gray-400 text-sm">57</div>
+          </div>
+          <div>
+            <h4 class="text-amber-400 font-semibold mb-3">Encadernador</h4>
+            <div class="text-gray-400 text-sm">4</div>
+          </div>
+          <div>
+            <h4 class="text-amber-400 font-semibold mb-3">Antigo possuidor</h4>
+            <div class="text-gray-400 text-sm">29</div>
+          </div>
+          <div>
+            <h4 class="text-amber-400 font-semibold mb-3">Impressor e Livreiro</h4>
+            <div class="text-gray-400 text-sm">106</div>
+          </div>
+          <div>
+            <h4 class="text-amber-400 font-semibold mb-3">Assunto</h4>
+            <div class="text-gray-400 text-sm">194</div>
+          </div>
+        </div>
+
+        <div class="flex justify-between mt-8">
+          <div class="text-gray-400 text-sm">
+            {{ selectedFiltersCount }} filtros selecionados
+          </div>
+          <div class="flex space-x-4">
+            <button 
+              @click="clearFilters"
+              class="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
+            >
+              Repor
+            </button>
+            <button 
+              @click="applyFilters"
+              class="px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-500 transition-colors"
+            >
+              Aplicar
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -471,14 +545,22 @@ const filteredItems = computed(() => {
     }
   })
 
-  // Paginação
-  const start = (currentPage.value - 1) * itemsPerPage
-  const end = start + itemsPerPage
-  return items.slice(start, end)
+  return items
 })
 
+const paginatedItems = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage
+  const end = start + itemsPerPage
+  return filteredItems.value.slice(start, end)
+})
+
+const filteredItemsCount = computed(() => filteredItems.value.length)
 const totalItems = computed(() => allItems.value.length)
-const totalPages = computed(() => Math.ceil(totalItems.value / itemsPerPage))
+const totalPages = computed(() => Math.ceil(filteredItemsCount.value / itemsPerPage))
+
+const selectedFiltersCount = computed(() => {
+  return filters.value.authors.length + filters.value.binders.length + filters.value.printers.length
+})
 
 const allAuthors = computed(() => {
   const authorCounts: { [key: string]: number } = {}
@@ -498,7 +580,7 @@ const allAuthors = computed(() => {
 const topAuthors = computed(() => allAuthors.value.slice(0, 10))
 
 const allBinders = computed(() => {
-  // Simulando dados de encadernadores
+  // Simulando dados de encadernadores baseados na imagem
   return [
     { name: 'Correia, António Maria', count: 2 },
     { name: 'Viana, Alberto', count: 2 },
@@ -539,6 +621,14 @@ const getPublicationYear = (dates: string[]): string => {
     return `${dates[0]}-${dates[1]}`
   }
   return dates[0] || ''
+}
+
+const removeFilter = (filterType: string, value: string) => {
+  const filterArray = filters.value[filterType as keyof typeof filters.value] as string[]
+  const index = filterArray.indexOf(value)
+  if (index > -1) {
+    filterArray.splice(index, 1)
+  }
 }
 
 const clearFilters = () => {
