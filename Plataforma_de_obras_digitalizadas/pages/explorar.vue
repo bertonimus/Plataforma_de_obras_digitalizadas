@@ -46,27 +46,30 @@
           <div class="mb-6">
             <h4 class="text-white font-medium mb-3">Pesquisar</h4>
             <div class="space-y-2">
-              <div class="flex items-center justify-between text-sm">
+              <div class="flex items-center justify-between text-sm cursor-pointer" @click="showSearchOptions = !showSearchOptions">
                 <span class="text-gray-300">O QUE PROCURA?</span>
-                <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 text-amber-400 transform transition-transform" :class="{ 'rotate-90': showSearchOptions }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                 </svg>
               </div>
               
-              <div class="space-y-2 text-xs text-gray-400">
-                <div class="flex items-center">
+              <div v-if="showSearchOptions" class="space-y-2 text-xs text-gray-400">
+                <div class="flex items-center cursor-pointer hover:text-amber-300 transition-colors" @click="toggleSearchFilter('local', 'Lisboa')">
+                  <input type="checkbox" v-model="searchFilters.local" value="Lisboa" class="mr-2 rounded bg-gray-700 border-gray-600 text-amber-500">
                   <svg class="w-3 h-3 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                   </svg>
                   <span>Mostrar os obras com Local de Publicação (atualização de grafia) "Lisboa"</span>
                 </div>
-                <div class="flex items-center">
+                <div class="flex items-center cursor-pointer hover:text-amber-300 transition-colors" @click="toggleSearchFilter('language', 'Latim')">
+                  <input type="checkbox" v-model="searchFilters.language" value="Latim" class="mr-2 rounded bg-gray-700 border-gray-600 text-amber-500">
                   <svg class="w-3 h-3 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                   </svg>
                   <span>Mostrar os obras com Código de língua Latim</span>
                 </div>
-                <div class="flex items-center">
+                <div class="flex items-center cursor-pointer hover:text-amber-300 transition-colors" @click="toggleSearchFilter('printer', 'Desaint, Nicolas')">
+                  <input type="checkbox" v-model="searchFilters.printer" value="Desaint, Nicolas" class="mr-2 rounded bg-gray-700 border-gray-600 text-amber-500">
                   <svg class="w-3 h-3 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                   </svg>
@@ -75,7 +78,9 @@
               </div>
               
               <div class="mt-4">
-                <span class="text-amber-400 text-sm font-medium">Filtros avançados</span>
+                <button @click="showAdvancedFilters = true" class="text-amber-400 text-sm font-medium hover:text-amber-300 transition-colors">
+                  Filtros avançados
+                </button>
               </div>
             </div>
           </div>
@@ -131,7 +136,7 @@
             <div class="space-y-2 max-h-48 overflow-y-auto">
               <div class="flex items-center justify-between p-2 bg-amber-600 rounded text-xs">
                 <span class="text-white font-medium">Desaint, Nicolas</span>
-                <span class="text-white font-bold">{{ filteredItemsCount }}</span>
+                <span class="text-white font-bold">{{ getFilteredCount('Desaint, Nicolas') }}</span>
               </div>
               <label 
                 v-for="printer in topPrinters" 
@@ -381,6 +386,118 @@
         </div>
       </main>
     </div>
+
+    <!-- Modal de Filtros Avançados -->
+    <div v-if="showAdvancedFilters" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50" @click="closeAdvancedFilters">
+      <div class="bg-gray-900 rounded-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden" @click.stop>
+        <!-- Header do Modal -->
+        <div class="flex items-center justify-between p-6 border-b border-gray-700">
+          <h2 class="text-xl font-bold text-white">Filtros</h2>
+          <button @click="showAdvancedFilters = false" class="text-gray-400 hover:text-white">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Conteúdo do Modal -->
+        <div class="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Coluna Esquerda -->
+            <div class="space-y-6">
+              <!-- Filtros Disponíveis -->
+              <div>
+                <h3 class="text-white font-semibold mb-4">FILTROS DISPONÍVEIS</h3>
+                <div class="space-y-3">
+                  <div v-for="filter in availableFilters" :key="filter.name" 
+                       class="flex items-center justify-between p-3 bg-gray-800 rounded cursor-pointer hover:bg-gray-700 transition-colors"
+                       @click="openFilterModal(filter)">
+                    <span class="text-white">{{ filter.name }}</span>
+                    <span class="text-amber-400 font-medium">{{ filter.count }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Coluna Direita -->
+            <div class="space-y-6">
+              <!-- Filtros Selecionados -->
+              <div v-if="selectedFiltersCount > 0">
+                <h3 class="text-white font-semibold mb-4">{{ selectedFiltersCount }} filtros selecionados</h3>
+                <div class="space-y-2">
+                  <div v-for="(filterValues, filterType) in activeFilters" :key="filterType">
+                    <div v-for="value in filterValues" :key="value" 
+                         class="flex items-center justify-between p-2 bg-amber-600 rounded text-sm">
+                      <span class="text-white">{{ getFilterLabel(filterType) }}: {{ value }}</span>
+                      <button @click="removeFilter(filterType, value)" class="text-white hover:text-gray-200">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer do Modal -->
+        <div class="flex items-center justify-between p-6 border-t border-gray-700">
+          <button @click="clearAllFilters" class="text-gray-400 hover:text-white">
+            Repor
+          </button>
+          <button @click="applyFilters" class="bg-amber-600 hover:bg-amber-500 text-white px-6 py-2 rounded-lg transition-colors">
+            Aplicar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Filtro Específico -->
+    <div v-if="showSpecificFilter" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50" @click="closeSpecificFilter">
+      <div class="bg-gray-900 rounded-lg max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden" @click.stop>
+        <!-- Header -->
+        <div class="flex items-center justify-between p-6 border-b border-gray-700">
+          <h2 class="text-xl font-bold text-white">{{ currentFilterModal?.name }}</h2>
+          <button @click="showSpecificFilter = false" class="text-gray-400 hover:text-white">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Conteúdo -->
+        <div class="p-6 overflow-y-auto max-h-[calc(80vh-140px)]">
+          <div class="grid grid-cols-2 gap-4">
+            <div v-for="option in currentFilterModal?.options" :key="option.name"
+                 class="flex items-center justify-between p-3 bg-gray-800 rounded cursor-pointer hover:bg-gray-700 transition-colors"
+                 @click="toggleFilterOption(currentFilterModal.type, option.name)">
+              <div class="flex items-center">
+                <input type="checkbox" 
+                       :checked="isFilterSelected(currentFilterModal.type, option.name)"
+                       class="mr-3 rounded bg-gray-700 border-gray-600 text-amber-500">
+                <span class="text-white text-sm">{{ option.name }}</span>
+              </div>
+              <span class="text-amber-400 font-medium text-sm">{{ option.count }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="flex items-center justify-between p-6 border-t border-gray-700">
+          <span class="text-gray-400 text-sm">{{ getSelectedCount(currentFilterModal?.type) }} filtros selecionados</span>
+          <div class="flex space-x-3">
+            <button @click="clearFilterType(currentFilterModal?.type)" class="text-gray-400 hover:text-white">
+              Repor
+            </button>
+            <button @click="showSpecificFilter = false" class="bg-amber-600 hover:bg-amber-500 text-white px-6 py-2 rounded-lg transition-colors">
+              Aplicar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -432,9 +549,31 @@ interface FilterCount {
   count: number
 }
 
+interface FilterOption {
+  name: string
+  count: number
+}
+
+interface AvailableFilter {
+  name: string
+  type: string
+  count: number
+  options: FilterOption[]
+}
+
 // Estado reativo
 const currentPage = ref(1)
 const itemsPerPage = 24
+const showSearchOptions = ref(false)
+const showAdvancedFilters = ref(false)
+const showSpecificFilter = ref(false)
+const currentFilterModal = ref<AvailableFilter | null>(null)
+
+const searchFilters = ref({
+  local: [] as string[],
+  language: [] as string[],
+  printer: [] as string[]
+})
 
 const filters = ref({
   itemType: [] as string[],
@@ -493,6 +632,15 @@ const filteredItems = computed(() => {
       item.metadata.title_personal?.values && 
       filters.value.authors.some(author => 
         item.metadata.title_personal!.values.includes(author)
+      )
+    )
+  }
+
+  // Filtrar por impressores
+  if (filters.value.printers.length > 0) {
+    items = items.filter(item => 
+      filters.value.printers.some(printer => 
+        item.metadata.title.values.toLowerCase().includes(printer.toLowerCase())
       )
     )
   }
@@ -573,7 +721,202 @@ const topSubjects = computed(() => {
   ]
 })
 
+const availableFilters = computed(() => [
+  {
+    name: 'Data de publicação',
+    type: 'date',
+    count: 1,
+    options: []
+  },
+  {
+    name: 'Tipo de Item',
+    type: 'itemType',
+    count: 1,
+    options: [{ name: 'Livro', count: totalItems.value }]
+  },
+  {
+    name: 'Código de língua',
+    type: 'language',
+    count: 11,
+    options: [
+      { name: 'lat', count: 54 },
+      { name: 'ara', count: 19 },
+      { name: 'fre', count: 12 },
+      { name: 'grc', count: 4 },
+      { name: 'por', count: 4 },
+      { name: 'spa', count: 4 },
+      { name: 'eng', count: 3 },
+      { name: 'heb', count: 3 },
+      { name: 'ita', count: 3 },
+      { name: 'chi', count: 2 },
+      { name: 'gre', count: 2 }
+    ]
+  },
+  {
+    name: 'Título',
+    type: 'title',
+    count: 80,
+    options: []
+  },
+  {
+    name: 'Local de Publicação (atualização de grafia)',
+    type: 'place',
+    count: 31,
+    options: [{ name: 'Paris', count: 21 }]
+  },
+  {
+    name: 'Autor',
+    type: 'author',
+    count: 57,
+    options: topAuthors.value
+  },
+  {
+    name: 'Encadernador',
+    type: 'binder',
+    count: 4,
+    options: allBinders.value
+  },
+  {
+    name: 'Antigo possuidor',
+    type: 'owner',
+    count: 28,
+    options: topOwners.value
+  },
+  {
+    name: 'Impressor e Livreiro',
+    type: 'printer',
+    count: 109,
+    options: [
+      { name: 'Desaint, Nicolas', count: 21 },
+      ...topPrinters.value
+    ]
+  },
+  {
+    name: 'Assunto',
+    type: 'subject',
+    count: 194,
+    options: topSubjects.value
+  }
+])
+
+const activeFilters = computed(() => {
+  const active: { [key: string]: string[] } = {}
+  
+  Object.entries(filters.value).forEach(([key, values]) => {
+    if (values.length > 0) {
+      active[key] = values
+    }
+  })
+  
+  return active
+})
+
+const selectedFiltersCount = computed(() => {
+  return Object.values(activeFilters.value).reduce((total, values) => total + values.length, 0)
+})
+
 // Methods
+const toggleSearchFilter = (type: string, value: string) => {
+  const filterArray = searchFilters.value[type as keyof typeof searchFilters.value]
+  const index = filterArray.indexOf(value)
+  
+  if (index > -1) {
+    filterArray.splice(index, 1)
+  } else {
+    filterArray.push(value)
+  }
+}
+
+const openFilterModal = (filter: AvailableFilter) => {
+  currentFilterModal.value = filter
+  showSpecificFilter.value = true
+}
+
+const closeAdvancedFilters = (event: Event) => {
+  if (event.target === event.currentTarget) {
+    showAdvancedFilters.value = false
+  }
+}
+
+const closeSpecificFilter = (event: Event) => {
+  if (event.target === event.currentTarget) {
+    showSpecificFilter.value = false
+  }
+}
+
+const toggleFilterOption = (filterType: string, value: string) => {
+  const filterKey = filterType as keyof typeof filters.value
+  const filterArray = filters.value[filterKey]
+  const index = filterArray.indexOf(value)
+  
+  if (index > -1) {
+    filterArray.splice(index, 1)
+  } else {
+    filterArray.push(value)
+  }
+}
+
+const isFilterSelected = (filterType: string, value: string): boolean => {
+  const filterKey = filterType as keyof typeof filters.value
+  return filters.value[filterKey].includes(value)
+}
+
+const getSelectedCount = (filterType: string | undefined): number => {
+  if (!filterType) return 0
+  const filterKey = filterType as keyof typeof filters.value
+  return filters.value[filterKey].length
+}
+
+const clearFilterType = (filterType: string | undefined) => {
+  if (!filterType) return
+  const filterKey = filterType as keyof typeof filters.value
+  filters.value[filterKey] = []
+}
+
+const removeFilter = (filterType: string, value: string) => {
+  const filterKey = filterType as keyof typeof filters.value
+  const index = filters.value[filterKey].indexOf(value)
+  if (index > -1) {
+    filters.value[filterKey].splice(index, 1)
+  }
+}
+
+const clearAllFilters = () => {
+  filters.value = {
+    itemType: [],
+    authors: [],
+    printers: [],
+    binders: [],
+    owners: [],
+    places: [],
+    subjects: []
+  }
+}
+
+const applyFilters = () => {
+  showAdvancedFilters.value = false
+  currentPage.value = 1
+}
+
+const getFilterLabel = (filterType: string): string => {
+  const labels: { [key: string]: string } = {
+    itemType: 'Tipo de Item',
+    authors: 'Autor',
+    printers: 'Impressor e Livreiro',
+    binders: 'Encadernador',
+    owners: 'Antigo possuidor',
+    places: 'Local de Publicação',
+    subjects: 'Assunto'
+  }
+  return labels[filterType] || filterType
+}
+
+const getFilteredCount = (printerName: string): number => {
+  return allItems.value.filter(item => 
+    item.metadata.title.values.toLowerCase().includes(printerName.toLowerCase())
+  ).length
+}
+
 const getItemThumbnail = (item: JoaninaItem): string | undefined => {
   if (item.cover) {
     return item.cover.url.replace("{KEY}", item.cover.key).replace("{FILENAME}", item.cover.filename)
