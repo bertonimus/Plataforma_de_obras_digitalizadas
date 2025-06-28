@@ -42,9 +42,21 @@
             </svg>
           </div>
           
-          <!-- Pesquisar -->
+          <!-- Barra de Pesquisa -->
           <div class="mb-6">
             <h4 class="text-white font-medium mb-3">Pesquisar</h4>
+            <div class="relative mb-4">
+              <input 
+                v-model="searchQuery"
+                type="text" 
+                placeholder="Pesquisar livros..."
+                class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+              >
+              <svg class="absolute right-3 top-2.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+            </div>
+            
             <div class="space-y-2">
               <div class="flex items-center justify-between text-sm cursor-pointer" @click="showSearchOptions = !showSearchOptions">
                 <span class="text-gray-300">O QUE PROCURA?</span>
@@ -285,6 +297,19 @@
           <div class="flex items-center space-x-4">
             <h2 class="text-4xl font-bold text-white">{{ filteredItemsCount }}</h2>
             <span class="text-gray-400 text-lg">Itens</span>
+          </div>
+          
+          <!-- Indicador de pesquisa ativa -->
+          <div v-if="searchQuery" class="flex items-center text-amber-400">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+            <span class="text-sm">Pesquisando por: "{{ searchQuery }}"</span>
+            <button @click="clearSearch" class="ml-2 text-gray-400 hover:text-white">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
           </div>
         </div>
 
@@ -568,6 +593,7 @@ const showSearchOptions = ref(false)
 const showAdvancedFilters = ref(false)
 const showSpecificFilter = ref(false)
 const currentFilterModal = ref<AvailableFilter | null>(null)
+const searchQuery = ref('')
 
 const searchFilters = ref({
   local: [] as string[],
@@ -620,6 +646,15 @@ const allItems = computed(() => data.value || [])
 
 const filteredItems = computed(() => {
   let items = allItems.value
+
+  // Filtrar por pesquisa de texto
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase().trim()
+    items = items.filter(item => 
+      item.metadata.title.values.toLowerCase().includes(query) ||
+      (item.metadata.title_personal?.values && item.metadata.title_personal.values.toLowerCase().includes(query))
+    )
+  }
 
   // Filtrar por tipo de item
   if (filters.value.itemType.length > 0) {
@@ -827,6 +862,11 @@ const toggleSearchFilter = (type: keyof typeof searchFilters.value, value: strin
   }
 }
 
+const clearSearch = () => {
+  searchQuery.value = ''
+  currentPage.value = 1
+}
+
 const openFilterModal = (filter: AvailableFilter) => {
   currentFilterModal.value = filter
   showSpecificFilter.value = true
@@ -891,6 +931,7 @@ const clearAllFilters = () => {
     places: [],
     subjects: []
   }
+  searchQuery.value = ''
 }
 
 const applyFilters = () => {
@@ -947,6 +988,10 @@ watch(filters, () => {
 watch(dateRange, () => {
   currentPage.value = 1
 }, { deep: true })
+
+watch(searchQuery, () => {
+  currentPage.value = 1
+})
 
 // SEO
 useHead({
