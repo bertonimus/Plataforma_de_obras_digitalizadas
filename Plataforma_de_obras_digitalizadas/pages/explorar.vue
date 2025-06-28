@@ -22,153 +22,216 @@
     </header>
 
     <div class="flex">
-      <!-- Sidebar com Filtros -->
-      <aside class="w-80 bg-gray-900 min-h-screen p-6 border-r border-gray-800">
+      <!-- Sidebar -->
+      <aside class="w-80 bg-gray-900 min-h-screen border-r border-gray-800">
         <!-- Header da Biblioteca -->
-        <div class="mb-8">
-          <h1 class="text-2xl font-bold text-amber-400 mb-2">Joanina Digital</h1>
-          <div class="flex space-x-4 text-sm">
-            <NuxtLink to="/inicio" class="text-amber-400 border-b border-amber-400 pb-1">INÍCIO</NuxtLink>
-            <span class="text-white">ITENS</span>
+        <div class="p-6 border-b border-gray-800">
+          <h1 class="text-2xl font-bold text-amber-400 mb-4">Joanina Digital</h1>
+          <div class="flex space-x-6 text-sm">
+            <NuxtLink to="/inicio" class="text-amber-400 border-b border-amber-400 pb-1 font-medium">INÍCIO</NuxtLink>
+            <span class="text-white font-medium">ITENS</span>
           </div>
         </div>
 
-        <!-- Seção Explorar -->
-        <div class="mb-8">
-          <h2 class="text-lg font-semibold text-amber-400 mb-4 flex items-center">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-            </svg>
-            Explorar
-          </h2>
-          
-          <!-- Pesquisar -->
-          <div class="mb-6">
-            <h3 class="text-white font-medium mb-3">Pesquisar</h3>
-            <div class="space-y-2 text-sm text-gray-300">
-              <div class="flex items-center">
-                <svg class="w-4 h-4 mr-2 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                </svg>
-                <span class="text-amber-400">O QUE PROCURA?</span>
+        <!-- Filtros -->
+        <div class="p-6 space-y-8">
+          <!-- Tipo de Item -->
+          <div>
+            <h3 class="text-white font-semibold mb-4 text-lg">Tipo de Item</h3>
+            <div class="space-y-3">
+              <label class="flex items-center justify-between cursor-pointer group">
+                <div class="flex items-center">
+                  <input 
+                    type="checkbox" 
+                    v-model="filters.itemType" 
+                    value="Livro"
+                    class="mr-3 rounded bg-gray-700 border-gray-600 text-amber-500 focus:ring-amber-500"
+                  >
+                  <span class="text-gray-300 group-hover:text-white transition-colors">Livro</span>
+                </div>
+                <span class="text-amber-400 font-medium">{{ totalItems }}</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Autor -->
+          <div>
+            <h3 class="text-white font-semibold mb-4 text-lg">Autor</h3>
+            <div class="space-y-3 max-h-64 overflow-y-auto">
+              <label 
+                v-for="author in topAuthors" 
+                :key="author.name"
+                class="flex items-center justify-between cursor-pointer group"
+              >
+                <div class="flex items-center">
+                  <input 
+                    type="checkbox" 
+                    v-model="filters.authors" 
+                    :value="author.name"
+                    class="mr-3 rounded bg-gray-700 border-gray-600 text-amber-500 focus:ring-amber-500"
+                  >
+                  <span class="text-gray-300 text-sm group-hover:text-white transition-colors">{{ author.name }}</span>
+                </div>
+                <span class="text-amber-400 font-medium text-sm">{{ author.count }}</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Impressor e Livreiro -->
+          <div>
+            <h3 class="text-white font-semibold mb-4 text-lg">Impressor e Livreiro</h3>
+            <div class="space-y-3 max-h-48 overflow-y-auto">
+              <div class="flex items-center justify-between p-3 bg-amber-600 rounded-lg">
+                <span class="text-white font-medium">Desaint, Nicolas</span>
+                <span class="text-white font-bold">{{ filteredItemsCount }}</span>
               </div>
-              <div class="ml-6 space-y-1">
-                <div class="flex items-center cursor-pointer hover:text-white">
-                  <svg class="w-3 h-3 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                  </svg>
-                  <span>Mostre-se obras com Escal de publicação</span>
+              <label 
+                v-for="printer in topPrinters" 
+                :key="printer.name"
+                class="flex items-center justify-between cursor-pointer group"
+              >
+                <div class="flex items-center">
+                  <input 
+                    type="checkbox" 
+                    v-model="filters.printers" 
+                    :value="printer.name"
+                    class="mr-3 rounded bg-gray-700 border-gray-600 text-amber-500 focus:ring-amber-500"
+                  >
+                  <span class="text-gray-300 text-sm group-hover:text-white transition-colors">{{ printer.name }}</span>
                 </div>
-                <div class="flex items-center cursor-pointer hover:text-white">
-                  <svg class="w-3 h-3 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                  </svg>
-                  <span>Mostre-se obras com Código de língua Latim</span>
+                <span class="text-amber-400 font-medium text-sm">{{ printer.count }}</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Encadernador -->
+          <div>
+            <h3 class="text-white font-semibold mb-4 text-lg">Encadernador</h3>
+            <div class="space-y-3">
+              <label 
+                v-for="binder in allBinders" 
+                :key="binder.name"
+                class="flex items-center justify-between cursor-pointer group"
+              >
+                <div class="flex items-center">
+                  <input 
+                    type="checkbox" 
+                    v-model="filters.binders" 
+                    :value="binder.name"
+                    class="mr-3 rounded bg-gray-700 border-gray-600 text-amber-500 focus:ring-amber-500"
+                  >
+                  <span class="text-gray-300 text-sm group-hover:text-white transition-colors">{{ binder.name }}</span>
                 </div>
-                <div class="flex items-center cursor-pointer hover:text-white">
-                  <svg class="w-3 h-3 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                  </svg>
-                  <span>Mostre-se obras com Impressor e Livreiro</span>
+                <span class="text-amber-400 font-medium text-sm">{{ binder.count }}</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Antigo possuidor -->
+          <div>
+            <h3 class="text-white font-semibold mb-4 text-lg">Antigo possuidor</h3>
+            <div class="space-y-3">
+              <label 
+                v-for="owner in topOwners" 
+                :key="owner.name"
+                class="flex items-center justify-between cursor-pointer group"
+              >
+                <div class="flex items-center">
+                  <input 
+                    type="checkbox" 
+                    v-model="filters.owners" 
+                    :value="owner.name"
+                    class="mr-3 rounded bg-gray-700 border-gray-600 text-amber-500 focus:ring-amber-500"
+                  >
+                  <span class="text-gray-300 text-sm group-hover:text-white transition-colors">{{ owner.name }}</span>
                 </div>
+                <span class="text-amber-400 font-medium text-sm">{{ owner.count }}</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Data de publicação -->
+          <div>
+            <h3 class="text-white font-semibold mb-4 text-lg">Data de publicação</h3>
+            <div class="space-y-4">
+              <div class="relative">
+                <input 
+                  type="range" 
+                  min="1520" 
+                  max="1803" 
+                  v-model="dateRange.start"
+                  class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
+                >
+                <input 
+                  type="range" 
+                  min="1520" 
+                  max="1803" 
+                  v-model="dateRange.end"
+                  class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider absolute top-0"
+                >
+              </div>
+              <div class="flex justify-between text-sm text-gray-400">
+                <span>{{ dateRange.start }}</span>
+                <span>{{ dateRange.end }}</span>
               </div>
             </div>
-            
-            <button 
-              @click="showAdvancedFilters = true"
-              class="mt-4 text-amber-400 hover:text-amber-300 text-sm flex items-center"
-            >
-              Filtros avançados
-              <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-              </svg>
-            </button>
           </div>
-        </div>
 
-        <!-- Filtros por Tipo -->
-        <div class="mb-6">
-          <h3 class="text-white font-medium mb-3">Tipo de Item</h3>
-          <div class="space-y-2">
-            <label class="flex items-center justify-between cursor-pointer hover:bg-gray-800 p-2 rounded">
-              <div class="flex items-center">
-                <input 
-                  type="checkbox" 
-                  v-model="filters.itemType" 
-                  value="Livro"
-                  class="mr-3 rounded bg-gray-700 border-gray-600 text-amber-500 focus:ring-amber-500"
-                >
-                <span class="text-gray-300">Livro</span>
-              </div>
-              <span class="text-gray-500 text-sm">{{ totalItems }}</span>
-            </label>
+          <!-- Local de Publicação -->
+          <div>
+            <h3 class="text-white font-semibold mb-4 text-lg">Local de Publicação (atualização de grafia)</h3>
+            <div class="space-y-3">
+              <label 
+                v-for="place in topPlaces" 
+                :key="place.name"
+                class="flex items-center justify-between cursor-pointer group"
+              >
+                <div class="flex items-center">
+                  <input 
+                    type="checkbox" 
+                    v-model="filters.places" 
+                    :value="place.name"
+                    class="mr-3 rounded bg-gray-700 border-gray-600 text-amber-500 focus:ring-amber-500"
+                  >
+                  <span class="text-gray-300 text-sm group-hover:text-white transition-colors">{{ place.name }}</span>
+                </div>
+                <span class="text-amber-400 font-medium text-sm">{{ place.count }}</span>
+              </label>
+            </div>
           </div>
-        </div>
 
-        <!-- Filtros por Autor -->
-        <div class="mb-6">
-          <h3 class="text-white font-medium mb-3">Autor</h3>
-          <div class="space-y-2 max-h-48 overflow-y-auto">
-            <label 
-              v-for="author in topAuthors" 
-              :key="author.name"
-              class="flex items-center justify-between cursor-pointer hover:bg-gray-800 p-2 rounded"
-            >
-              <div class="flex items-center">
-                <input 
-                  type="checkbox" 
-                  v-model="filters.authors" 
-                  :value="author.name"
-                  class="mr-3 rounded bg-gray-700 border-gray-600 text-amber-500 focus:ring-amber-500"
-                >
-                <span class="text-gray-300 text-sm">{{ author.name }}</span>
-              </div>
-              <span class="text-gray-500 text-sm">{{ author.count }}</span>
-            </label>
-          </div>
-        </div>
-
-        <!-- Filtros por Impressor -->
-        <div class="mb-6">
-          <h3 class="text-white font-medium mb-3">Impressor e Livreiro</h3>
-          <div class="space-y-2 max-h-32 overflow-y-auto">
-            <label 
-              v-for="printer in topPrinters" 
-              :key="printer.name"
-              class="flex items-center justify-between cursor-pointer hover:bg-gray-800 p-2 rounded"
-            >
-              <div class="flex items-center">
-                <input 
-                  type="checkbox" 
-                  v-model="filters.printers" 
-                  :value="printer.name"
-                  class="mr-3 rounded bg-gray-700 border-gray-600 text-amber-500 focus:ring-amber-500"
-                >
-                <span class="text-gray-300 text-sm">{{ printer.name }}</span>
-              </div>
-              <span class="text-gray-500 text-sm">{{ printer.count }}</span>
-            </label>
+          <!-- Assunto -->
+          <div>
+            <h3 class="text-white font-semibold mb-4 text-lg">Assunto</h3>
+            <div class="space-y-3 max-h-48 overflow-y-auto">
+              <label 
+                v-for="subject in topSubjects" 
+                :key="subject.name"
+                class="flex items-center justify-between cursor-pointer group"
+              >
+                <div class="flex items-center">
+                  <input 
+                    type="checkbox" 
+                    v-model="filters.subjects" 
+                    :value="subject.name"
+                    class="mr-3 rounded bg-gray-700 border-gray-600 text-amber-500 focus:ring-amber-500"
+                  >
+                  <span class="text-gray-300 text-sm group-hover:text-white transition-colors">{{ subject.name }}</span>
+                </div>
+                <span class="text-amber-400 font-medium text-sm">{{ subject.count }}</span>
+              </label>
+            </div>
           </div>
         </div>
       </aside>
 
       <!-- Conteúdo Principal -->
       <main class="flex-1 p-6">
-        <!-- Header com contagem e ordenação -->
+        <!-- Header com contagem -->
         <div class="flex justify-between items-center mb-6">
           <div class="flex items-center space-x-4">
-            <h2 class="text-2xl font-bold text-white">{{ filteredItemsCount }}</h2>
-            <span class="text-gray-400">Itens</span>
-          </div>
-          <div class="flex items-center space-x-4">
-            <select 
-              v-model="sortBy" 
-              class="bg-gray-800 text-white border border-gray-700 rounded px-3 py-2 text-sm"
-            >
-              <option value="title">Título</option>
-              <option value="date">Data</option>
-              <option value="author">Autor</option>
-            </select>
+            <h2 class="text-4xl font-bold text-white">{{ filteredItemsCount }}</h2>
+            <span class="text-gray-400 text-lg">Itens</span>
           </div>
         </div>
 
@@ -264,157 +327,6 @@
         </div>
       </main>
     </div>
-
-    <!-- Modal de Filtros Avançados -->
-    <div v-if="showAdvancedFilters" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-gray-900 rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto">
-        <div class="flex justify-between items-center mb-6">
-          <h3 class="text-xl font-bold text-white">Filtros</h3>
-          <button @click="showAdvancedFilters = false" class="text-gray-400 hover:text-white">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-          </button>
-        </div>
-
-        <!-- Filtros Ativos -->
-        <div class="mb-6">
-          <h4 class="text-amber-400 font-semibold mb-3">Filtros Ativos</h4>
-          <div class="flex flex-wrap gap-2">
-            <div v-for="author in filters.authors" :key="author" class="flex items-center bg-amber-600 text-white px-3 py-1 rounded-full text-sm">
-              <span class="mr-2">Autor</span>
-              <span class="mr-2 font-medium">{{ author }}</span>
-              <button @click="removeFilter('authors', author)" class="hover:bg-amber-700 rounded-full p-1">
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-              </button>
-            </div>
-            <div v-for="binder in filters.binders" :key="binder" class="flex items-center bg-amber-600 text-white px-3 py-1 rounded-full text-sm">
-              <span class="mr-2">Encadernador</span>
-              <span class="mr-2 font-medium">{{ binder }}</span>
-              <button @click="removeFilter('binders', binder)" class="hover:bg-amber-700 rounded-full p-1">
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <!-- Filtro por Autor -->
-          <div>
-            <h4 class="text-amber-400 font-semibold mb-3">Autor</h4>
-            <div class="space-y-2 max-h-64 overflow-y-auto">
-              <label 
-                v-for="author in allAuthors" 
-                :key="author.name"
-                class="flex items-center justify-between cursor-pointer hover:bg-gray-800 p-2 rounded"
-              >
-                <div class="flex items-center">
-                  <input 
-                    type="checkbox" 
-                    v-model="filters.authors" 
-                    :value="author.name"
-                    class="mr-3 rounded bg-gray-700 border-gray-600 text-amber-500 focus:ring-amber-500"
-                  >
-                  <span class="text-gray-300 text-sm">{{ author.name }}</span>
-                </div>
-                <span class="text-gray-500 text-sm">{{ author.count }}</span>
-              </label>
-            </div>
-          </div>
-
-          <!-- Filtro por Encadernador -->
-          <div>
-            <h4 class="text-amber-400 font-semibold mb-3">Encadernador</h4>
-            <div class="space-y-2 max-h-64 overflow-y-auto">
-              <label 
-                v-for="binder in allBinders" 
-                :key="binder.name"
-                class="flex items-center justify-between cursor-pointer hover:bg-gray-800 p-2 rounded"
-              >
-                <div class="flex items-center">
-                  <input 
-                    type="checkbox" 
-                    v-model="filters.binders" 
-                    :value="binder.name"
-                    class="mr-3 rounded bg-gray-700 border-gray-600 text-amber-500 focus:ring-amber-500"
-                  >
-                  <span class="text-gray-300 text-sm">{{ binder.name }}</span>
-                </div>
-                <span class="text-gray-500 text-sm">{{ binder.count }}</span>
-              </label>
-            </div>
-          </div>
-        </div>
-
-        <!-- Filtros Adicionais -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-          <div>
-            <h4 class="text-amber-400 font-semibold mb-3">Data de publicação</h4>
-            <div class="text-gray-400 text-sm">1</div>
-          </div>
-          <div>
-            <h4 class="text-amber-400 font-semibold mb-3">Tipo de Item</h4>
-            <div class="text-gray-400 text-sm">1</div>
-          </div>
-          <div>
-            <h4 class="text-amber-400 font-semibold mb-3">Código de língua</h4>
-            <div class="text-gray-400 text-sm">11</div>
-          </div>
-          <div>
-            <h4 class="text-amber-400 font-semibold mb-3">Título</h4>
-            <div class="text-gray-400 text-sm">80</div>
-          </div>
-          <div>
-            <h4 class="text-amber-400 font-semibold mb-3">Local de Publicação</h4>
-            <div class="text-gray-400 text-sm">31</div>
-          </div>
-          <div>
-            <h4 class="text-amber-400 font-semibold mb-3">Autor</h4>
-            <div class="text-gray-400 text-sm">57</div>
-          </div>
-          <div>
-            <h4 class="text-amber-400 font-semibold mb-3">Encadernador</h4>
-            <div class="text-gray-400 text-sm">4</div>
-          </div>
-          <div>
-            <h4 class="text-amber-400 font-semibold mb-3">Antigo possuidor</h4>
-            <div class="text-gray-400 text-sm">29</div>
-          </div>
-          <div>
-            <h4 class="text-amber-400 font-semibold mb-3">Impressor e Livreiro</h4>
-            <div class="text-gray-400 text-sm">106</div>
-          </div>
-          <div>
-            <h4 class="text-amber-400 font-semibold mb-3">Assunto</h4>
-            <div class="text-gray-400 text-sm">194</div>
-          </div>
-        </div>
-
-        <div class="flex justify-between mt-8">
-          <div class="text-gray-400 text-sm">
-            {{ selectedFiltersCount }} filtros selecionados
-          </div>
-          <div class="flex space-x-4">
-            <button 
-              @click="clearFilters"
-              class="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
-            >
-              Repor
-            </button>
-            <button 
-              @click="applyFilters"
-              class="px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-500 transition-colors"
-            >
-              Aplicar
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -461,24 +373,28 @@ interface JoaninaItem {
   }
 }
 
-interface AuthorCount {
+interface FilterCount {
   name: string
   count: number
 }
 
 // Estado reativo
-const showAdvancedFilters = ref(false)
 const currentPage = ref(1)
 const itemsPerPage = 24
-const sortBy = ref('title')
 
 const filters = ref({
   itemType: [] as string[],
   authors: [] as string[],
   printers: [] as string[],
   binders: [] as string[],
-  dateRange: null as string | null,
-  language: [] as string[]
+  owners: [] as string[],
+  places: [] as string[],
+  subjects: [] as string[]
+})
+
+const dateRange = ref({
+  start: 1520,
+  end: 1803
 })
 
 // API functions
@@ -527,22 +443,11 @@ const filteredItems = computed(() => {
     )
   }
 
-  // Ordenar
-  items = [...items].sort((a, b) => {
-    switch (sortBy.value) {
-      case 'title':
-        return a.metadata.title.values.localeCompare(b.metadata.title.values)
-      case 'date':
-        const dateA = a.metadata.publication_date?.values?.[0] || '0'
-        const dateB = b.metadata.publication_date?.values?.[0] || '0'
-        return dateB.localeCompare(dateA)
-      case 'author':
-        const authorA = a.metadata.title_personal?.values || ''
-        const authorB = b.metadata.title_personal?.values || ''
-        return authorA.localeCompare(authorB)
-      default:
-        return 0
-    }
+  // Filtrar por data
+  items = items.filter(item => {
+    if (!item.metadata.publication_date?.values) return true
+    const year = parseInt(item.metadata.publication_date.values[0])
+    return year >= dateRange.value.start && year <= dateRange.value.end
   })
 
   return items
@@ -558,11 +463,7 @@ const filteredItemsCount = computed(() => filteredItems.value.length)
 const totalItems = computed(() => allItems.value.length)
 const totalPages = computed(() => Math.ceil(filteredItemsCount.value / itemsPerPage))
 
-const selectedFiltersCount = computed(() => {
-  return filters.value.authors.length + filters.value.binders.length + filters.value.printers.length
-})
-
-const allAuthors = computed(() => {
+const topAuthors = computed(() => {
   const authorCounts: { [key: string]: number } = {}
   
   allItems.value.forEach(item => {
@@ -575,12 +476,19 @@ const allAuthors = computed(() => {
   return Object.entries(authorCounts)
     .map(([name, count]) => ({ name, count }))
     .sort((a, b) => b.count - a.count)
+    .slice(0, 10)
 })
 
-const topAuthors = computed(() => allAuthors.value.slice(0, 10))
+const topPrinters = computed(() => {
+  return [
+    { name: 'Clousier, Michel', count: 10 },
+    { name: 'Delaulne, Florentin', count: 10 },
+    { name: 'Foucault, Hilaire', count: 10 },
+    { name: 'Ganeau, Étienne', count: 10 }
+  ]
+})
 
 const allBinders = computed(() => {
-  // Simulando dados de encadernadores baseados na imagem
   return [
     { name: 'Correia, António Maria', count: 2 },
     { name: 'Viana, Alberto', count: 2 },
@@ -589,14 +497,25 @@ const allBinders = computed(() => {
   ]
 })
 
-const topPrinters = computed(() => {
-  // Simulando dados de impressores
+const topOwners = computed(() => {
   return [
-    { name: 'Desaint, Nicolas', count: 21 },
-    { name: 'Clousier, Michel', count: 10 },
-    { name: 'Delaulne, Florentin', count: 10 },
-    { name: 'Foucault, Hilaire', count: 10 },
-    { name: 'Ganeau, Étienne', count: 10 }
+    { name: 'Liceu Nacional Dom João III', count: 21 },
+    { name: 'Ordem dos Eremitas Descalços de Santo Agostinho', count: 21 }
+  ]
+})
+
+const topPlaces = computed(() => {
+  return [
+    { name: 'Paris', count: 21 }
+  ]
+})
+
+const topSubjects = computed(() => {
+  return [
+    { name: 'América', count: 21 },
+    { name: 'Arábia', count: 21 },
+    { name: 'China', count: 21 },
+    { name: 'Grécia', count: 21 }
   ]
 })
 
@@ -623,33 +542,12 @@ const getPublicationYear = (dates: string[]): string => {
   return dates[0] || ''
 }
 
-const removeFilter = (filterType: string, value: string) => {
-  const filterArray = filters.value[filterType as keyof typeof filters.value] as string[]
-  const index = filterArray.indexOf(value)
-  if (index > -1) {
-    filterArray.splice(index, 1)
-  }
-}
-
-const clearFilters = () => {
-  filters.value = {
-    itemType: [],
-    authors: [],
-    printers: [],
-    binders: [],
-    dateRange: null,
-    language: []
-  }
-  currentPage.value = 1
-}
-
-const applyFilters = () => {
-  showAdvancedFilters.value = false
-  currentPage.value = 1
-}
-
 // Watch for filter changes
 watch(filters, () => {
+  currentPage.value = 1
+}, { deep: true })
+
+watch(dateRange, () => {
   currentPage.value = 1
 }, { deep: true })
 
@@ -686,5 +584,45 @@ useHead({
 
 ::-webkit-scrollbar-thumb:hover {
   background: #9CA3AF;
+}
+
+/* Range slider styling */
+.slider {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.slider::-webkit-slider-track {
+  background: #374151;
+  height: 8px;
+  border-radius: 4px;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  background: #F59E0B;
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.slider::-moz-range-track {
+  background: #374151;
+  height: 8px;
+  border-radius: 4px;
+  border: none;
+}
+
+.slider::-moz-range-thumb {
+  background: #F59E0B;
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
 }
 </style>
