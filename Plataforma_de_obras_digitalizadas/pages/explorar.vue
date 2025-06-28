@@ -33,12 +33,60 @@
           </div>
         </div>
 
+        <!-- Explorar Section -->
+        <div class="p-6 border-b border-gray-800">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-amber-400 font-semibold text-lg">Explorar</h3>
+            <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+          </div>
+          
+          <!-- Pesquisar -->
+          <div class="mb-6">
+            <h4 class="text-white font-medium mb-3">Pesquisar</h4>
+            <div class="space-y-2">
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-gray-300">O QUE PROCURA?</span>
+                <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+              </div>
+              
+              <div class="space-y-2 text-xs text-gray-400">
+                <div class="flex items-center">
+                  <svg class="w-3 h-3 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                  </svg>
+                  <span>Mostrar os obras com Local de Publicação (atualização de grafia) "Lisboa"</span>
+                </div>
+                <div class="flex items-center">
+                  <svg class="w-3 h-3 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                  </svg>
+                  <span>Mostrar os obras com Código de língua Latim</span>
+                </div>
+                <div class="flex items-center">
+                  <svg class="w-3 h-3 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                  </svg>
+                  <span>Mostrar os obras com Impressor e Livreiro "Desaint, Nicolas"</span>
+                </div>
+              </div>
+              
+              <div class="mt-4">
+                <span class="text-amber-400 text-sm font-medium">Filtros avançados</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Filtros -->
-        <div class="p-6 space-y-8">
+        <div class="p-6 space-y-6 overflow-y-auto max-h-[calc(100vh-400px)]">
           <!-- Tipo de Item -->
           <div>
-            <h3 class="text-white font-semibold mb-4 text-lg">Tipo de Item</h3>
-            <div class="space-y-3">
+            <h3 class="text-white font-semibold mb-3 text-sm">Tipo de Item</h3>
+            <div class="space-y-2">
               <label class="flex items-center justify-between cursor-pointer group">
                 <div class="flex items-center">
                   <input 
@@ -47,17 +95,17 @@
                     value="Livro"
                     class="mr-3 rounded bg-gray-700 border-gray-600 text-amber-500 focus:ring-amber-500"
                   >
-                  <span class="text-gray-300 group-hover:text-white transition-colors">Livro</span>
+                  <span class="text-gray-300 text-sm group-hover:text-white transition-colors">Livro</span>
                 </div>
-                <span class="text-amber-400 font-medium">{{ totalItems }}</span>
+                <span class="text-white font-medium text-sm">{{ totalItems }}</span>
               </label>
             </div>
           </div>
 
           <!-- Autor -->
           <div>
-            <h3 class="text-white font-semibold mb-4 text-lg">Autor</h3>
-            <div class="space-y-3 max-h-64 overflow-y-auto">
+            <h3 class="text-white font-semibold mb-3 text-sm">Autor</h3>
+            <div class="space-y-2 max-h-48 overflow-y-auto">
               <label 
                 v-for="author in topAuthors" 
                 :key="author.name"
@@ -70,18 +118,18 @@
                     :value="author.name"
                     class="mr-3 rounded bg-gray-700 border-gray-600 text-amber-500 focus:ring-amber-500"
                   >
-                  <span class="text-gray-300 text-sm group-hover:text-white transition-colors">{{ author.name }}</span>
+                  <span class="text-gray-300 text-xs group-hover:text-white transition-colors">{{ author.name }}</span>
                 </div>
-                <span class="text-amber-400 font-medium text-sm">{{ author.count }}</span>
+                <span class="text-white font-medium text-xs">{{ author.count }}</span>
               </label>
             </div>
           </div>
 
           <!-- Impressor e Livreiro -->
           <div>
-            <h3 class="text-white font-semibold mb-4 text-lg">Impressor e Livreiro</h3>
-            <div class="space-y-3 max-h-48 overflow-y-auto">
-              <div class="flex items-center justify-between p-3 bg-amber-600 rounded-lg">
+            <h3 class="text-white font-semibold mb-3 text-sm">Impressor e Livreiro</h3>
+            <div class="space-y-2 max-h-48 overflow-y-auto">
+              <div class="flex items-center justify-between p-2 bg-amber-600 rounded text-xs">
                 <span class="text-white font-medium">Desaint, Nicolas</span>
                 <span class="text-white font-bold">{{ filteredItemsCount }}</span>
               </div>
@@ -97,17 +145,17 @@
                     :value="printer.name"
                     class="mr-3 rounded bg-gray-700 border-gray-600 text-amber-500 focus:ring-amber-500"
                   >
-                  <span class="text-gray-300 text-sm group-hover:text-white transition-colors">{{ printer.name }}</span>
+                  <span class="text-gray-300 text-xs group-hover:text-white transition-colors">{{ printer.name }}</span>
                 </div>
-                <span class="text-amber-400 font-medium text-sm">{{ printer.count }}</span>
+                <span class="text-white font-medium text-xs">{{ printer.count }}</span>
               </label>
             </div>
           </div>
 
           <!-- Encadernador -->
           <div>
-            <h3 class="text-white font-semibold mb-4 text-lg">Encadernador</h3>
-            <div class="space-y-3">
+            <h3 class="text-white font-semibold mb-3 text-sm">Encadernador</h3>
+            <div class="space-y-2">
               <label 
                 v-for="binder in allBinders" 
                 :key="binder.name"
@@ -120,17 +168,17 @@
                     :value="binder.name"
                     class="mr-3 rounded bg-gray-700 border-gray-600 text-amber-500 focus:ring-amber-500"
                   >
-                  <span class="text-gray-300 text-sm group-hover:text-white transition-colors">{{ binder.name }}</span>
+                  <span class="text-gray-300 text-xs group-hover:text-white transition-colors">{{ binder.name }}</span>
                 </div>
-                <span class="text-amber-400 font-medium text-sm">{{ binder.count }}</span>
+                <span class="text-white font-medium text-xs">{{ binder.count }}</span>
               </label>
             </div>
           </div>
 
           <!-- Antigo possuidor -->
           <div>
-            <h3 class="text-white font-semibold mb-4 text-lg">Antigo possuidor</h3>
-            <div class="space-y-3">
+            <h3 class="text-white font-semibold mb-3 text-sm">Antigo possuidor</h3>
+            <div class="space-y-2">
               <label 
                 v-for="owner in topOwners" 
                 :key="owner.name"
@@ -143,16 +191,16 @@
                     :value="owner.name"
                     class="mr-3 rounded bg-gray-700 border-gray-600 text-amber-500 focus:ring-amber-500"
                   >
-                  <span class="text-gray-300 text-sm group-hover:text-white transition-colors">{{ owner.name }}</span>
+                  <span class="text-gray-300 text-xs group-hover:text-white transition-colors">{{ owner.name }}</span>
                 </div>
-                <span class="text-amber-400 font-medium text-sm">{{ owner.count }}</span>
+                <span class="text-white font-medium text-xs">{{ owner.count }}</span>
               </label>
             </div>
           </div>
 
           <!-- Data de publicação -->
           <div>
-            <h3 class="text-white font-semibold mb-4 text-lg">Data de publicação</h3>
+            <h3 class="text-white font-semibold mb-3 text-sm">Data de publicação</h3>
             <div class="space-y-4">
               <div class="relative">
                 <input 
@@ -170,7 +218,7 @@
                   class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider absolute top-0"
                 >
               </div>
-              <div class="flex justify-between text-sm text-gray-400">
+              <div class="flex justify-between text-xs text-gray-400">
                 <span>{{ dateRange.start }}</span>
                 <span>{{ dateRange.end }}</span>
               </div>
@@ -179,8 +227,8 @@
 
           <!-- Local de Publicação -->
           <div>
-            <h3 class="text-white font-semibold mb-4 text-lg">Local de Publicação (atualização de grafia)</h3>
-            <div class="space-y-3">
+            <h3 class="text-white font-semibold mb-3 text-sm">Local de Publicação (atualização de grafia)</h3>
+            <div class="space-y-2">
               <label 
                 v-for="place in topPlaces" 
                 :key="place.name"
@@ -193,17 +241,17 @@
                     :value="place.name"
                     class="mr-3 rounded bg-gray-700 border-gray-600 text-amber-500 focus:ring-amber-500"
                   >
-                  <span class="text-gray-300 text-sm group-hover:text-white transition-colors">{{ place.name }}</span>
+                  <span class="text-gray-300 text-xs group-hover:text-white transition-colors">{{ place.name }}</span>
                 </div>
-                <span class="text-amber-400 font-medium text-sm">{{ place.count }}</span>
+                <span class="text-white font-medium text-xs">{{ place.count }}</span>
               </label>
             </div>
           </div>
 
           <!-- Assunto -->
           <div>
-            <h3 class="text-white font-semibold mb-4 text-lg">Assunto</h3>
-            <div class="space-y-3 max-h-48 overflow-y-auto">
+            <h3 class="text-white font-semibold mb-3 text-sm">Assunto</h3>
+            <div class="space-y-2 max-h-48 overflow-y-auto">
               <label 
                 v-for="subject in topSubjects" 
                 :key="subject.name"
@@ -216,9 +264,9 @@
                     :value="subject.name"
                     class="mr-3 rounded bg-gray-700 border-gray-600 text-amber-500 focus:ring-amber-500"
                   >
-                  <span class="text-gray-300 text-sm group-hover:text-white transition-colors">{{ subject.name }}</span>
+                  <span class="text-gray-300 text-xs group-hover:text-white transition-colors">{{ subject.name }}</span>
                 </div>
-                <span class="text-amber-400 font-medium text-sm">{{ subject.count }}</span>
+                <span class="text-white font-medium text-xs">{{ subject.count }}</span>
               </label>
             </div>
           </div>
@@ -258,7 +306,7 @@
         </div>
 
         <!-- Grid de Livros -->
-        <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-6">
+        <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-4">
           <NuxtLink
             v-for="item in paginatedItems" 
             :key="item.key"
@@ -266,7 +314,7 @@
             class="group cursor-pointer transform transition-all duration-300 hover:scale-105"
           >
             <div class="bg-gray-900 rounded-lg overflow-hidden hover:bg-gray-800 transition-colors duration-300">
-              <div class="relative h-80 bg-gradient-to-br from-amber-100 to-orange-200 overflow-hidden">
+              <div class="relative h-64 bg-gradient-to-br from-amber-100 to-orange-200 overflow-hidden">
                 <img 
                   :src="getItemThumbnail(item)" 
                   :alt="item.metadata.title.values"
@@ -275,26 +323,32 @@
                 />
                 <div v-if="!getItemThumbnail(item)" class="w-full h-full flex items-center justify-center bg-amber-100">
                   <div class="text-center text-amber-800 p-4">
-                    <svg class="w-16 h-16 mx-auto mb-2 opacity-50" fill="currentColor" viewBox="0 0 20 20">
+                    <svg class="w-12 h-12 mx-auto mb-2 opacity-50" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"></path>
                     </svg>
-                    <p class="text-xs font-medium">{{ item.metadata.title.values.substring(0, 30) }}...</p>
+                    <p class="text-xs font-medium">{{ item.metadata.title.values.substring(0, 20) }}...</p>
                   </div>
                 </div>
               </div>
               
-              <div class="p-4">
-                <h3 class="font-semibold text-white mb-2 line-clamp-3 text-sm leading-tight group-hover:text-amber-300 transition-colors">
+              <div class="p-3">
+                <h3 class="font-semibold text-white mb-2 line-clamp-3 text-xs leading-tight group-hover:text-amber-300 transition-colors">
                   {{ item.metadata.title.values }}
                 </h3>
                 <p v-if="item.metadata.title_personal?.values" class="text-gray-400 text-xs mb-1">
                   {{ item.metadata.title_personal.values }}
                 </p>
                 <div class="flex justify-between items-center text-xs text-gray-500">
+                  <span v-if="item.metadata.publication_date?.values" class="text-amber-400">
+                    Livro
+                  </span>
+                  <span v-if="item.stats.pages" class="text-amber-400 font-medium">{{ item.stats.pages }}</span>
+                </div>
+                <div class="text-xs text-gray-500 mt-1">
                   <span v-if="item.metadata.publication_date?.values">
                     {{ getPublicationYear(item.metadata.publication_date.values) }}
                   </span>
-                  <span v-if="item.stats.pages">{{ item.stats.pages }} páginas</span>
+                  <span v-if="item.stats.pages" class="ml-2">Páginas</span>
                 </div>
               </div>
             </div>
