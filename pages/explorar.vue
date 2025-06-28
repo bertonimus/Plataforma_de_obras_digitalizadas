@@ -450,11 +450,11 @@
               <div v-if="selectedFiltersCount > 0">
                 <h3 class="text-white font-semibold mb-4">{{ selectedFiltersCount }} filtros selecionados</h3>
                 <div class="space-y-2">
-                  <div v-for="(filterValues, filterType) in activeFilters" :key="filterType">
+                  <div v-for="(filterValues, filterKey) in activeFilters" :key="filterKey">
                     <div v-for="value in filterValues" :key="value" 
                          class="flex items-center justify-between p-2 bg-amber-600 rounded text-sm">
-                      <span class="text-white">{{ getFilterLabel(filterType) }}: {{ value }}</span>
-                      <button @click="removeFilter(filterType, value)" class="text-white hover:text-gray-200">
+                      <span class="text-white">{{ getFilterLabel(filterKey) }}: {{ value }}</span>
+                      <button @click="removeFilterByKey(filterKey, value)" class="text-white hover:text-gray-200">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
@@ -497,10 +497,10 @@
           <div class="grid grid-cols-2 gap-4">
             <div v-for="option in currentFilterModal?.options || []" :key="option.name"
                  class="flex items-center justify-between p-3 bg-gray-800 rounded cursor-pointer hover:bg-gray-700 transition-colors"
-                 @click="toggleFilterOption(currentFilterModal?.type || '', option.name)">
+                 @click="toggleFilterByType(currentFilterModal?.type || '', option.name)">
               <div class="flex items-center">
                 <input type="checkbox" 
-                       :checked="isFilterSelected(currentFilterModal?.type || '', option.name)"
+                       :checked="isFilterSelectedByType(currentFilterModal?.type || '', option.name)"
                        class="mr-3 rounded bg-gray-700 border-gray-600 text-amber-500">
                 <span class="text-white text-sm">{{ option.name }}</span>
               </div>
@@ -511,9 +511,9 @@
 
         <!-- Footer -->
         <div class="flex items-center justify-between p-6 border-t border-gray-700">
-          <span class="text-gray-400 text-sm">{{ getSelectedCount(currentFilterModal?.type) }} filtros selecionados</span>
+          <span class="text-gray-400 text-sm">{{ getSelectedCountByType(currentFilterModal?.type) }} filtros selecionados</span>
           <div class="flex space-x-3">
-            <button @click="clearFilterType(currentFilterModal?.type)" class="text-gray-400 hover:text-white">
+            <button @click="clearFilterByType(currentFilterModal?.type)" class="text-gray-400 hover:text-white">
               Repor
             </button>
             <button @click="showSpecificFilter = false" class="bg-amber-600 hover:bg-amber-500 text-white px-6 py-2 rounded-lg transition-colors">
@@ -850,15 +850,29 @@ const selectedFiltersCount = computed(() => {
   return Object.values(activeFilters.value).reduce((total, values) => total + values.length, 0)
 })
 
-// Methods
-const toggleSearchFilter = (type: keyof typeof searchFilters.value, value: string) => {
-  const filterArray = searchFilters.value[type]
-  const index = filterArray.indexOf(value)
-  
-  if (index > -1) {
-    filterArray.splice(index, 1)
-  } else {
-    filterArray.push(value)
+// Methods sem usar FilterType
+const toggleSearchFilter = (type: string, value: string) => {
+  if (type === 'local') {
+    const index = searchFilters.value.local.indexOf(value)
+    if (index > -1) {
+      searchFilters.value.local.splice(index, 1)
+    } else {
+      searchFilters.value.local.push(value)
+    }
+  } else if (type === 'language') {
+    const index = searchFilters.value.language.indexOf(value)
+    if (index > -1) {
+      searchFilters.value.language.splice(index, 1)
+    } else {
+      searchFilters.value.language.push(value)
+    }
+  } else if (type === 'printer') {
+    const index = searchFilters.value.printer.indexOf(value)
+    if (index > -1) {
+      searchFilters.value.printer.splice(index, 1)
+    } else {
+      searchFilters.value.printer.push(value)
+    }
   }
 }
 
@@ -884,40 +898,141 @@ const closeSpecificFilter = (event: Event) => {
   }
 }
 
-const toggleFilterOption = (filterType: string, value: string) => {
-  const filterKey = filterType as keyof typeof filters.value
-  const filterArray = filters.value[filterKey]
-  const index = filterArray.indexOf(value)
-  
-  if (index > -1) {
-    filterArray.splice(index, 1)
-  } else {
-    filterArray.push(value)
+const toggleFilterByType = (filterType: string, value: string) => {
+  if (filterType === 'itemType') {
+    const index = filters.value.itemType.indexOf(value)
+    if (index > -1) {
+      filters.value.itemType.splice(index, 1)
+    } else {
+      filters.value.itemType.push(value)
+    }
+  } else if (filterType === 'author') {
+    const index = filters.value.authors.indexOf(value)
+    if (index > -1) {
+      filters.value.authors.splice(index, 1)
+    } else {
+      filters.value.authors.push(value)
+    }
+  } else if (filterType === 'printer') {
+    const index = filters.value.printers.indexOf(value)
+    if (index > -1) {
+      filters.value.printers.splice(index, 1)
+    } else {
+      filters.value.printers.push(value)
+    }
+  } else if (filterType === 'binder') {
+    const index = filters.value.binders.indexOf(value)
+    if (index > -1) {
+      filters.value.binders.splice(index, 1)
+    } else {
+      filters.value.binders.push(value)
+    }
+  } else if (filterType === 'owner') {
+    const index = filters.value.owners.indexOf(value)
+    if (index > -1) {
+      filters.value.owners.splice(index, 1)
+    } else {
+      filters.value.owners.push(value)
+    }
+  } else if (filterType === 'place') {
+    const index = filters.value.places.indexOf(value)
+    if (index > -1) {
+      filters.value.places.splice(index, 1)
+    } else {
+      filters.value.places.push(value)
+    }
+  } else if (filterType === 'subject') {
+    const index = filters.value.subjects.indexOf(value)
+    if (index > -1) {
+      filters.value.subjects.splice(index, 1)
+    } else {
+      filters.value.subjects.push(value)
+    }
   }
 }
 
-const isFilterSelected = (filterType: string, value: string): boolean => {
-  const filterKey = filterType as keyof typeof filters.value
-  return filters.value[filterKey].includes(value)
+const isFilterSelectedByType = (filterType: string, value: string): boolean => {
+  if (filterType === 'itemType') {
+    return filters.value.itemType.includes(value)
+  } else if (filterType === 'author') {
+    return filters.value.authors.includes(value)
+  } else if (filterType === 'printer') {
+    return filters.value.printers.includes(value)
+  } else if (filterType === 'binder') {
+    return filters.value.binders.includes(value)
+  } else if (filterType === 'owner') {
+    return filters.value.owners.includes(value)
+  } else if (filterType === 'place') {
+    return filters.value.places.includes(value)
+  } else if (filterType === 'subject') {
+    return filters.value.subjects.includes(value)
+  }
+  return false
 }
 
-const getSelectedCount = (filterType: string | undefined): number => {
+const getSelectedCountByType = (filterType: string | undefined): number => {
   if (!filterType) return 0
-  const filterKey = filterType as keyof typeof filters.value
-  return filters.value[filterKey].length
+  
+  if (filterType === 'itemType') {
+    return filters.value.itemType.length
+  } else if (filterType === 'author') {
+    return filters.value.authors.length
+  } else if (filterType === 'printer') {
+    return filters.value.printers.length
+  } else if (filterType === 'binder') {
+    return filters.value.binders.length
+  } else if (filterType === 'owner') {
+    return filters.value.owners.length
+  } else if (filterType === 'place') {
+    return filters.value.places.length
+  } else if (filterType === 'subject') {
+    return filters.value.subjects.length
+  }
+  return 0
 }
 
-const clearFilterType = (filterType: string | undefined) => {
+const clearFilterByType = (filterType: string | undefined) => {
   if (!filterType) return
-  const filterKey = filterType as keyof typeof filters.value
-  filters.value[filterKey] = []
+  
+  if (filterType === 'itemType') {
+    filters.value.itemType = []
+  } else if (filterType === 'author') {
+    filters.value.authors = []
+  } else if (filterType === 'printer') {
+    filters.value.printers = []
+  } else if (filterType === 'binder') {
+    filters.value.binders = []
+  } else if (filterType === 'owner') {
+    filters.value.owners = []
+  } else if (filterType === 'place') {
+    filters.value.places = []
+  } else if (filterType === 'subject') {
+    filters.value.subjects = []
+  }
 }
 
-const removeFilter = (filterType: string, value: string) => {
-  const filterKey = filterType as keyof typeof filters.value
-  const index = filters.value[filterKey].indexOf(value)
-  if (index > -1) {
-    filters.value[filterKey].splice(index, 1)
+const removeFilterByKey = (filterKey: string, value: string) => {
+  if (filterKey === 'itemType') {
+    const index = filters.value.itemType.indexOf(value)
+    if (index > -1) filters.value.itemType.splice(index, 1)
+  } else if (filterKey === 'authors') {
+    const index = filters.value.authors.indexOf(value)
+    if (index > -1) filters.value.authors.splice(index, 1)
+  } else if (filterKey === 'printers') {
+    const index = filters.value.printers.indexOf(value)
+    if (index > -1) filters.value.printers.splice(index, 1)
+  } else if (filterKey === 'binders') {
+    const index = filters.value.binders.indexOf(value)
+    if (index > -1) filters.value.binders.splice(index, 1)
+  } else if (filterKey === 'owners') {
+    const index = filters.value.owners.indexOf(value)
+    if (index > -1) filters.value.owners.splice(index, 1)
+  } else if (filterKey === 'places') {
+    const index = filters.value.places.indexOf(value)
+    if (index > -1) filters.value.places.splice(index, 1)
+  } else if (filterKey === 'subjects') {
+    const index = filters.value.subjects.indexOf(value)
+    if (index > -1) filters.value.subjects.splice(index, 1)
   }
 }
 
@@ -939,7 +1054,7 @@ const applyFilters = () => {
   currentPage.value = 1
 }
 
-const getFilterLabel = (filterType: string): string => {
+const getFilterLabel = (filterKey: string): string => {
   const labels: { [key: string]: string } = {
     itemType: 'Tipo de Item',
     authors: 'Autor',
@@ -949,7 +1064,7 @@ const getFilterLabel = (filterType: string): string => {
     places: 'Local de Publicação',
     subjects: 'Assunto'
   }
-  return labels[filterType] || filterType
+  return labels[filterKey] || filterKey
 }
 
 const getFilteredCount = (printerName: string): number => {
