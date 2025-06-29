@@ -9,5 +9,10 @@ export default defineNuxtConfig({
       autoprefixer: {},
     },
   },
-  
+  typescript: {
+    typeCheck: false
+  },
+  build: {
+    transpile: ['mirador']
+  }
 })
