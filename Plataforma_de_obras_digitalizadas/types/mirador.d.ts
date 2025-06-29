@@ -36,9 +36,11 @@ declare module 'mirador' {
     actions: any
   }
 
-  export function viewer(config: MiradorConfig): MiradorViewer
+  export function viewer(config: MiradorConfig): MiradorViewer | null
 
-  export default {
-    viewer: (config: MiradorConfig) => MiradorViewer
+  const Mirador: {
+    viewer: (config: MiradorConfig) => MiradorViewer | null
   }
+
+  export default Mirador
 }
