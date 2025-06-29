@@ -69,6 +69,8 @@
 </template>
 
 <script setup lang="ts">
+import type { IIIFManifest, MiradorViewer } from 'mirador'
+
 interface JoaninaItem {
   key: string
   type: string
@@ -117,7 +119,7 @@ const loading = ref(true)
 const error = ref('')
 const bookTitle = ref('')
 const loadingMessage = ref('Carregando dados do livro...')
-const miradorInstance = ref(null)
+const miradorInstance = ref<MiradorViewer | null>(null)
 
 // Fetch book data
 const fetchBookData = async (): Promise<JoaninaItem> => {
@@ -142,7 +144,7 @@ const fetchBookData = async (): Promise<JoaninaItem> => {
 }
 
 // Fetch IIIF manifest
-const fetchManifest = async (bookKey: string) => {
+const fetchManifest = async (bookKey: string): Promise<IIIFManifest> => {
   try {
     loadingMessage.value = 'Carregando manifest IIIF...'
     console.log('Fetching manifest for book:', bookKey)
@@ -150,7 +152,7 @@ const fetchManifest = async (bookKey: string) => {
     const manifestUrl = `https://nexus.fw.dev.ucframework.pt/v1/digitalis/iiif/joanina/${bookKey}/manifest.json`
     console.log('Manifest URL:', manifestUrl)
     
-    const manifest = await $fetch(manifestUrl, {
+    const manifest = await $fetch<IIIFManifest>(manifestUrl, {
       headers: {
         'Accept': 'application/json'
       }
@@ -195,7 +197,7 @@ const initializeMirador = async () => {
     container.innerHTML = ''
     
     // Initialize Mirador
-    const manifestId = manifest['@id'] || manifest.id
+    const manifestId = manifest['@id'] || manifest.id || `manifest-${book.key}`
     console.log('Initializing Mirador with manifest ID:', manifestId)
     
     miradorInstance.value = Mirador.default.viewer({
