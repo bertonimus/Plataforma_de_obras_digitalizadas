@@ -34,9 +34,10 @@
             </svg>
             <h1 class="text-2xl font-bold mb-2">Erro ao carregar livro</h1>
             <p class="text-gray-400">Não foi possível carregar os detalhes do livro.</p>
+            <p class="text-gray-500 text-sm mt-2">ID: {{ id }}</p>
           </div>
           <NuxtLink 
-            to="/" 
+            to="/explorar" 
             class="inline-flex items-center px-6 py-3 bg-amber-600 text-white font-medium rounded-lg hover:bg-amber-700 transition-colors"
           >
             ← Voltar para a biblioteca
@@ -67,7 +68,7 @@
                 <div class="relative h-96 md:h-full bg-gradient-to-br from-amber-100 to-orange-200">
                   <img 
                     v-if="getBookThumbnail(book)" 
-                   
+                    :src="getBookThumbnail(book)"
                     :alt="book.metadata.title.values"
                     class="w-full h-full object-cover"
                     @error="onImageError"
@@ -88,14 +89,17 @@
                 <h1 class="text-4xl font-bold text-white mb-4 leading-tight">{{ book.metadata.title.values }}</h1>
                 
                 <div class="space-y-4 mb-8">
-                  <p v-if="book.metadata.title_personal.values" class="text-xl text-amber-300">
+                  <p v-if="book.metadata.title_personal?.values" class="text-xl text-amber-300">
                     <span class="font-semibold">Autor:</span> {{ book.metadata.title_personal.values }}
                   </p>
-                  <p v-if="book.metadata.publication_date.values[1]" class="text-lg text-gray-300">
-                    <span class="font-semibold">Data:</span> {{ book.metadata.publication_date.values[0] }}-{{ book.metadata.publication_date.values[1] }}
-                  </p>
-                  <p v-else class="text-lg text-gray-300">
-                    <span class="font-semibold">Data:</span> {{ book.metadata.publication_date.values[0] }}
+                  <p v-if="book.metadata.publication_date?.values" class="text-lg text-gray-300">
+                    <span class="font-semibold">Data:</span> 
+                    <span v-if="book.metadata.publication_date.values.length > 1">
+                      {{ book.metadata.publication_date.values[0] }}-{{ book.metadata.publication_date.values[1] }}
+                    </span>
+                    <span v-else>
+                      {{ book.metadata.publication_date.values[0] }}
+                    </span>
                   </p>
                 </div>
   
@@ -106,29 +110,38 @@
                     <p class="text-white text-2xl font-bold">{{ book.stats.pages }}</p>
                   </div>  
                   
-                  <div v-if="book.metadata.language_code.values" class="bg-gray-800 rounded-lg p-4">
+                  <div v-if="book.metadata.language_code?.values" class="bg-gray-800 rounded-lg p-4">
                     <h3 class="text-amber-400 font-semibold mb-2">Idioma</h3>
                     <p class="text-white text-lg">{{ book.metadata.language_code.values.join(", ") }}</p>
                   </div>
                   
-                  <div v-if="book.metadata.hierarchical_place_name.values" class="bg-gray-800 rounded-lg p-4">
+                  <div v-if="book.metadata.hierarchical_place_name?.values" class="bg-gray-800 rounded-lg p-4">
                     <h3 class="text-amber-400 font-semibold mb-2">Local de publicação</h3>
                     <p class="text-white text-lg">{{ book.metadata.hierarchical_place_name.values}}</p>
                   </div>
                   
-                  <div v-if="book.metadata.volume.values" class="bg-gray-800 rounded-lg p-4">
-                    <h3 class="text-amber-400 font-semibold mb-2">Local de publicação</h3>
+                  <div v-if="book.metadata.volume?.values" class="bg-gray-800 rounded-lg p-4">
+                    <h3 class="text-amber-400 font-semibold mb-2">Volume</h3>
                     <p class="text-white text-lg">{{ book.metadata.volume.values}}</p>
                   </div>
                 </div>
   
-              
                 <!-- Actions -->
                 <div class="flex flex-wrap gap-4">
-                  <button class="bg-amber-600 hover:bg-amber-500 text-white px-8 py-3 rounded-lg font-semibold transition-colors">
+                  <NuxtLink 
+                    :to="`/visualizar/${book.key}`"
+                    class="bg-amber-600 hover:bg-amber-500 text-white px-8 py-3 rounded-lg font-semibold transition-colors inline-flex items-center"
+                  >
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                    </svg>
                     Visualizar Livro
-                  </button>
-                  <button class="bg-gray-700 hover:bg-gray-600 text-white px-8 py-3 rounded-lg font-semibold transition-colors">
+                  </NuxtLink>
+                  <button class="bg-gray-700 hover:bg-gray-600 text-white px-8 py-3 rounded-lg font-semibold transition-colors inline-flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
                     Descarregar
                   </button>
                 </div>
@@ -138,7 +151,7 @@
           <!-- Back Button -->
           <div class="mt-12 text-center">
             <NuxtLink 
-              to="/" 
+              to="/explorar" 
               class="inline-flex items-center px-8 py-3 bg-gray-700 hover:bg-gray-600 text-white font-medium rounded-lg transition-colors"
             >
               <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -158,7 +171,7 @@
             <p class="text-gray-500">O livro solicitado não existe ou não está disponível.</p>
           </div>
           <NuxtLink 
-            to="/" 
+            to="/explorar" 
             class="inline-flex items-center px-6 py-3 bg-amber-600 text-white font-medium rounded-lg hover:bg-amber-700 transition-colors"
           >
             ← Voltar para a biblioteca
@@ -194,19 +207,19 @@
     title:{
       values:string
     }
-    title_personal:{
+    title_personal?:{
         values:string
     }
-    publication_date:{
+    publication_date?:{
         values:string[]
     }
-    language_code:{
+    language_code?:{
         values:string[]
     }
-    hierarchical_place_name:{
+    hierarchical_place_name?:{
         values:string
     }
-    volume:{
+    volume?:{
         values:string
     }
   } 
@@ -218,12 +231,14 @@
   // Fetch book details from API
   const { data: book, pending, error } = await useLazyAsyncData(`book-${id}`, async () => {
     try {
+      console.log('Fetching book with ID:', id)
       const response = await $fetch<JoaninaItem>(`https://nexus.fw.dev.ucframework.pt/v1/digitalis/collections/joanina/items/${id}`, {
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json'
         }
       })
+      console.log('Book data received:', response)
       return response
     } catch (error) {
       console.error('Erro ao carregar detalhes do livro:', error)
@@ -233,18 +248,27 @@
   
   const getBookThumbnail = (item: JoaninaItem): string | undefined => {
   // Tenta diferentes propriedades para encontrar uma imagem
-  const imageurl=item.cover.url.replace("{KEY}",item.cover.key).replace("{FILENAME}",item.cover.filename)
-  console.log(imageurl)
-  if (item.cover) return imageurl
+  if (item.cover && item.cover.url && item.cover.key && item.cover.filename) {
+    const imageurl = item.cover.url.replace("{KEY}", item.cover.key).replace("{FILENAME}", item.cover.filename)
+    console.log('Generated image URL:', imageurl)
+    return imageurl
+  }
   return undefined
 }
   
   const onImageError = (event: Event) => {
     const img = event.target as HTMLImageElement
+    console.log('Image failed to load:', img.src)
     img.style.display = 'none'
   }
   
   // SEO
+  useHead({
+    title: book.value ? `${book.value.metadata.title.values} - Biblioteca Digital Joanina` : 'Livro - Biblioteca Digital Joanina',
+    meta: [
+      { name: 'description', content: book.value ? `Detalhes do livro ${book.value.metadata.title.values} da Biblioteca Joanina Digital.` : 'Detalhes do livro da Biblioteca Joanina Digital.' }
+    ]
+  })
  
   </script>
   

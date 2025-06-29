@@ -42,6 +42,7 @@
           </svg>
           <h3 class="text-xl font-semibold mb-2">Erro ao carregar livro</h3>
           <p class="text-gray-400">Não foi possível carregar o visualizador do livro.</p>
+          <p class="text-gray-500 text-sm mt-2">ID: {{ bookId }}</p>
         </div>
         <NuxtLink 
           :to="`/livro/${bookId}`"
@@ -49,6 +50,24 @@
         >
           Voltar aos detalhes
         </NuxtLink>
+      </div>
+    </div>
+
+    <!-- Simple Image Viewer (fallback) -->
+    <div v-else-if="!useMirador && bookData" class="h-[calc(100vh-64px)] overflow-auto">
+      <div class="max-w-4xl mx-auto p-6">
+        <h2 class="text-2xl font-bold text-white mb-6">{{ bookData.metadata.title.values }}</h2>
+        <div class="grid gap-4">
+          <div v-for="pageNum in bookData.stats.pages" :key="pageNum" class="bg-gray-800 rounded-lg p-4">
+            <h3 class="text-amber-400 mb-2">Página {{ pageNum }}</h3>
+            <img 
+              :src="getPageImageUrl(bookData, pageNum)"
+              :alt="`Página ${pageNum}`"
+              class="w-full max-w-2xl mx-auto rounded shadow-lg"
+              @error="onImageError"
+            />
+          </div>
+        </div>
       </div>
     </div>
 
@@ -107,11 +126,14 @@ const bookId = route.params.id as string
 const loading = ref(true)
 const error = ref(false)
 const bookTitle = ref('')
+const bookData = ref<JoaninaItem | null>(null)
 const miradorInstance = ref<any>(null)
+const useMirador = ref(true) // Toggle between Mirador and simple viewer
 
 // Fetch book data
 const fetchBookData = async () => {
   try {
+    console.log('Fetching book data for visualization:', bookId)
     const response = await $fetch<JoaninaItem>(`https://nexus.fw.dev.ucframework.pt/v1/digitalis/collections/joanina/items/${bookId}`, {
       headers: {
         'Accept': 'application/json',
@@ -119,12 +141,21 @@ const fetchBookData = async () => {
       }
     })
     
+    console.log('Book data received for visualization:', response)
     bookTitle.value = response.metadata.title.values
+    bookData.value = response
     return response
   } catch (err) {
     console.error('Erro ao carregar dados do livro:', err)
     throw err
   }
+}
+
+// Get page image URL
+const getPageImageUrl = (book: JoaninaItem, pageNumber: number): string => {
+  const baseUrl = book.cover.url.replace("{KEY}", book.cover.key).replace("{FILENAME}", "")
+  const pageNum = pageNumber.toString().padStart(4, '0')
+  return `${baseUrl}page_${pageNum}.jpg`
 }
 
 // Generate IIIF manifest from book data
@@ -133,7 +164,7 @@ const generateIIIFManifest = (book: JoaninaItem) => {
   
   // Generate pages based on book stats
   const canvases = []
-  for (let i = 1; i <= book.stats.pages; i++) {
+  for (let i = 1; i <= Math.min(book.stats.pages, 10); i++) { // Limit to 10 pages for testing
     const pageNumber = i.toString().padStart(4, '0')
     const imageUrl = `${baseUrl}page_${pageNumber}.jpg`
     
@@ -152,12 +183,7 @@ const generateIIIFManifest = (book: JoaninaItem) => {
           "@type": "dctypes:Image",
           "format": "image/jpeg",
           "height": 3000,
-          "width": 2000,
-          "service": {
-            "@context": "http://iiif.io/api/image/2/context.json",
-            "@id": imageUrl.replace('.jpg', ''),
-            "profile": "http://iiif.io/api/image/2/level2.json"
-          }
+          "width": 2000
         },
         "on": `${baseUrl}/canvas/${i}`
       }]
@@ -202,53 +228,66 @@ const initializeMirador = async () => {
   try {
     loading.value = true
     
-    // Load Mirador dynamically
-    const Mirador = await import('mirador')
-    
-    // Fetch book data
+    // Fetch book data first
     const book = await fetchBookData()
     
-    // Generate IIIF manifest
-    const manifest = generateIIIFManifest(book)
+    if (!useMirador.value) {
+      loading.value = false
+      return
+    }
     
-    // Initialize Mirador
-    miradorInstance.value = Mirador.viewer({
-      id: 'mirador-viewer',
-      manifests: {
-        [manifest['@id']]: manifest
-      },
-      windows: [{
-        manifestId: manifest['@id'],
-        canvasIndex: 0
-      }],
-      workspaceControlPanel: {
-        enabled: true
-      },
-      window: {
-        allowClose: false,
-        allowMaximize: true,
-        defaultSideBarPanel: 'info',
-        sideBarOpenByDefault: false,
-        panels: {
-          info: true,
-          attribution: true,
-          canvas: true,
-          annotations: false,
-          search: false
+    // Try to load Mirador
+    try {
+      const Mirador = await import('mirador')
+      
+      // Generate IIIF manifest
+      const manifest = generateIIIFManifest(book)
+      console.log('Generated manifest:', manifest)
+      
+      // Initialize Mirador
+      miradorInstance.value = Mirador.viewer({
+        id: 'mirador-viewer',
+        manifests: {
+          [manifest['@id']]: manifest
+        },
+        windows: [{
+          manifestId: manifest['@id'],
+          canvasIndex: 0
+        }],
+        workspaceControlPanel: {
+          enabled: true
+        },
+        window: {
+          allowClose: false,
+          allowMaximize: true,
+          defaultSideBarPanel: 'info',
+          sideBarOpenByDefault: false,
+          panels: {
+            info: true,
+            attribution: true,
+            canvas: true,
+            annotations: false,
+            search: false
+          }
+        },
+        workspace: {
+          showZoomControls: true,
+          type: 'single'
+        },
+        thumbnailNavigation: {
+          defaultPosition: 'off'
         }
-      },
-      workspace: {
-        showZoomControls: true,
-        type: 'single'
-      },
-      thumbnailNavigation: {
-        defaultPosition: 'off'
-      }
-    })
+      })
+      
+      console.log('Mirador initialized successfully')
+    } catch (miradorError) {
+      console.error('Erro ao carregar Mirador, usando visualizador simples:', miradorError)
+      useMirador.value = false
+    }
     
     loading.value = false
   } catch (err) {
-    console.error('Erro ao inicializar Mirador:', err)
+    console.error('Erro ao inicializar visualizador:', err)
     error.value = true
     loading.value = false
   }
@@ -263,6 +302,13 @@ const toggleFullscreen = () => {
   }
 }
 
+// Handle image errors
+const onImageError = (event: Event) => {
+  const img = event.target as HTMLImageElement
+  console.log('Image failed to load:', img.src)
+  img.style.display = 'none'
+}
+
 // Lifecycle
 onMounted(() => {
   initializeMirador()
@@ -270,7 +316,6 @@ onMounted(() => {
 
 onUnmounted(() => {
   if (miradorInstance.value) {
-    // Cleanup Mirador instance if needed
     miradorInstance.value = null
   }
 })
