@@ -30,6 +30,7 @@
       <div class="text-center">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-4"></div>
         <p class="text-gray-300">Carregando visualizador...</p>
+        <p class="text-gray-500 text-sm mt-2">{{ loadingMessage }}</p>
       </div>
     </div>
 
@@ -41,15 +42,23 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
           </svg>
           <h3 class="text-xl font-semibold mb-2">Erro ao carregar livro</h3>
-          <p class="text-gray-400">Não foi possível carregar o visualizador do livro.</p>
+          <p class="text-gray-400">{{ errorMessage }}</p>
           <p class="text-gray-500 text-sm mt-2">ID: {{ bookId }}</p>
         </div>
-        <NuxtLink 
-          :to="`/livro/${bookId}`"
-          class="bg-amber-600 hover:bg-amber-700 text-white px-6 py-2 rounded-lg transition-colors"
-        >
-          Voltar aos detalhes
-        </NuxtLink>
+        <div class="flex gap-4 justify-center">
+          <button 
+            @click="retryWithSimpleViewer"
+            class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition-colors"
+          >
+            Tentar visualizador simples
+          </button>
+          <NuxtLink 
+            :to="`/livro/${bookId}`"
+            class="bg-amber-600 hover:bg-amber-700 text-white px-6 py-2 rounded-lg transition-colors"
+          >
+            Voltar aos detalhes
+          </NuxtLink>
+        </div>
       </div>
     </div>
 
@@ -58,7 +67,7 @@
       <div class="max-w-4xl mx-auto p-6">
         <h2 class="text-2xl font-bold text-white mb-6">{{ bookData.metadata.title.values }}</h2>
         <div class="grid gap-4">
-          <div v-for="pageNum in bookData.stats.pages" :key="pageNum" class="bg-gray-800 rounded-lg p-4">
+          <div v-for="pageNum in Math.min(bookData.stats.pages, 20)" :key="pageNum" class="bg-gray-800 rounded-lg p-4">
             <h3 class="text-amber-400 mb-2">Página {{ pageNum }}</h3>
             <img 
               :src="getPageImageUrl(bookData, pageNum)"
@@ -125,15 +134,24 @@ const bookId = route.params.id as string
 
 const loading = ref(true)
 const error = ref(false)
+const errorMessage = ref('')
+const loadingMessage = ref('Inicializando...')
 const bookTitle = ref('')
 const bookData = ref<JoaninaItem | null>(null)
 const miradorInstance = ref<any>(null)
-const useMirador = ref(true) // Toggle between Mirador and simple viewer
+const useMirador = ref(true)
+
+// Get IIIF manifest URL
+const getManifestUrl = (bookKey: string): string => {
+  return `https://nexus.fw.dev.ucframework.pt/v1/digitalis/iiif/joanina/${bookKey}/manifest.json`
+}
 
 // Fetch book data
 const fetchBookData = async () => {
   try {
+    loadingMessage.value = 'Carregando dados do livro...'
     console.log('Fetching book data for visualization:', bookId)
+    
     const response = await $fetch<JoaninaItem>(`https://nexus.fw.dev.ucframework.pt/v1/digitalis/collections/joanina/items/${bookId}`, {
       headers: {
         'Accept': 'application/json',
@@ -151,82 +169,39 @@ const fetchBookData = async () => {
   }
 }
 
-// Get page image URL
+// Fetch IIIF manifest
+const fetchManifest = async (bookKey: string) => {
+  try {
+    loadingMessage.value = 'Carregando manifest IIIF...'
+    const manifestUrl = getManifestUrl(bookKey)
+    console.log('Fetching IIIF manifest from:', manifestUrl)
+    
+    const manifest = await $fetch(manifestUrl, {
+      headers: {
+        'Accept': 'application/json'
+      }
+    })
+    
+    console.log('IIIF manifest received:', manifest)
+    return { manifest, manifestUrl }
+  } catch (err) {
+    console.error('Erro ao carregar manifest IIIF:', err)
+    throw err
+  }
+}
+
+// Get page image URL (fallback method)
 const getPageImageUrl = (book: JoaninaItem, pageNumber: number): string => {
   const baseUrl = book.cover.url.replace("{KEY}", book.cover.key).replace("{FILENAME}", "")
   const pageNum = pageNumber.toString().padStart(4, '0')
   return `${baseUrl}page_${pageNum}.jpg`
 }
 
-// Generate IIIF manifest from book data
-const generateIIIFManifest = (book: JoaninaItem) => {
-  const baseUrl = book.cover.url.replace("{KEY}", book.cover.key).replace("{FILENAME}", "")
-  
-  // Generate pages based on book stats
-  const canvases = []
-  for (let i = 1; i <= Math.min(book.stats.pages, 10); i++) { // Limit to 10 pages for testing
-    const pageNumber = i.toString().padStart(4, '0')
-    const imageUrl = `${baseUrl}page_${pageNumber}.jpg`
-    
-    canvases.push({
-      "@id": `${baseUrl}/canvas/${i}`,
-      "@type": "sc:Canvas",
-      "label": `Página ${i}`,
-      "height": 3000,
-      "width": 2000,
-      "images": [{
-        "@id": `${baseUrl}/annotation/${i}`,
-        "@type": "oa:Annotation",
-        "motivation": "sc:painting",
-        "resource": {
-          "@id": imageUrl,
-          "@type": "dctypes:Image",
-          "format": "image/jpeg",
-          "height": 3000,
-          "width": 2000
-        },
-        "on": `${baseUrl}/canvas/${i}`
-      }]
-    })
-  }
-
-  return {
-    "@context": "http://iiif.io/api/presentation/2/context.json",
-    "@id": `${baseUrl}/manifest`,
-    "@type": "sc:Manifest",
-    "label": book.metadata.title.values,
-    "description": book.metadata.title_personal?.values || "",
-    "metadata": [
-      {
-        "label": "Título",
-        "value": book.metadata.title.values
-      },
-      {
-        "label": "Autor",
-        "value": book.metadata.title_personal?.values || "Desconhecido"
-      },
-      {
-        "label": "Data de Publicação",
-        "value": book.metadata.publication_date?.values.join("-") || "Desconhecida"
-      },
-      {
-        "label": "Páginas",
-        "value": book.stats.pages.toString()
-      }
-    ],
-    "sequences": [{
-      "@id": `${baseUrl}/sequence/normal`,
-      "@type": "sc:Sequence",
-      "label": "Sequência Normal",
-      "canvases": canvases
-    }]
-  }
-}
-
-// Initialize Mirador
+// Initialize Mirador with real IIIF manifest
 const initializeMirador = async () => {
   try {
     loading.value = true
+    error.value = false
     
     // Fetch book data first
     const book = await fetchBookData()
@@ -236,22 +211,24 @@ const initializeMirador = async () => {
       return
     }
     
+    // Fetch IIIF manifest
+    const { manifest, manifestUrl } = await fetchManifest(book.key)
+    
     // Try to load Mirador
     try {
+      loadingMessage.value = 'Inicializando Mirador...'
       const Mirador = await import('mirador')
       
-      // Generate IIIF manifest
-      const manifest = generateIIIFManifest(book)
-      console.log('Generated manifest:', manifest)
+      console.log('Initializing Mirador with manifest:', manifestUrl)
       
-      // Initialize Mirador
+      // Initialize Mirador with the real IIIF manifest
       miradorInstance.value = Mirador.viewer({
         id: 'mirador-viewer',
         manifests: {
-          [manifest['@id']]: manifest
+          [manifestUrl]: manifest
         },
         windows: [{
-          manifestId: manifest['@id'],
+          manifestId: manifestUrl,
           canvasIndex: 0
         }],
         workspaceControlPanel: {
@@ -282,6 +259,7 @@ const initializeMirador = async () => {
       console.log('Mirador initialized successfully')
     } catch (miradorError) {
       console.error('Erro ao carregar Mirador, usando visualizador simples:', miradorError)
+      errorMessage.value = 'Erro ao carregar Mirador. Tentando visualizador alternativo...'
       useMirador.value = false
     }
     
@@ -289,8 +267,16 @@ const initializeMirador = async () => {
   } catch (err) {
     console.error('Erro ao inicializar visualizador:', err)
     error.value = true
+    errorMessage.value = err instanceof Error ? err.message : 'Erro desconhecido ao carregar o livro'
     loading.value = false
   }
+}
+
+// Retry with simple viewer
+const retryWithSimpleViewer = () => {
+  useMirador.value = false
+  error.value = false
+  initializeMirador()
 }
 
 // Toggle fullscreen
