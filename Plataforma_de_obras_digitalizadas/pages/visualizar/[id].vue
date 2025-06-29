@@ -17,7 +17,7 @@
           <div class="flex items-center space-x-4">
             <button @click="toggleFullscreen" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-lineeu join="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
               </svg>
             </button>
           </div>
@@ -47,10 +47,10 @@
         </div>
         <div class="flex gap-4 justify-center">
           <button 
-            @click="retryWithSimpleViewer"
+            @click="initializeMirador"
             class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition-colors"
           >
-            Tentar visualizador simples
+            Tentar novamente
           </button>
           <NuxtLink 
             :to="`/livro/${bookId}`"
@@ -58,24 +58,6 @@
           >
             Voltar aos detalhes
           </NuxtLink>
-        </div>
-      </div>
-    </div>
-
-    <!-- Simple Image Viewer (fallback) -->
-    <div v-else-if="!useMirador && bookData" class="h-[calc(100vh-64px)] overflow-auto">
-      <div class="max-w-4xl mx-auto p-6">
-        <h2 class="text-2xl font-bold text-white mb-6">{{ bookData.metadata.title.values }}</h2>
-        <div class="grid gap-4">
-          <div v-for="pageNum in Math.min(bookData.stats.pages, 20)" :key="pageNum" class="bg-gray-800 rounded-lg p-4">
-            <h3 class="text-amber-400 mb-2">Página {{ pageNum }}</h3>
-            <img 
-              :src="getPageImageUrl(bookData, pageNum)"
-              :alt="`Página ${pageNum}`"
-              class="w-full max-w-2xl mx-auto rounded shadow-lg"
-              @error="onImageError"
-            />
-          </div>
         </div>
       </div>
     </div>
@@ -137,9 +119,7 @@ const error = ref(false)
 const errorMessage = ref('')
 const loadingMessage = ref('Inicializando...')
 const bookTitle = ref('')
-const bookData = ref<JoaninaItem | null>(null)
 const miradorInstance = ref<any>(null)
-const useMirador = ref(true)
 
 // Get IIIF manifest URL
 const getManifestUrl = (bookKey: string): string => {
@@ -161,7 +141,6 @@ const fetchBookData = async () => {
     
     console.log('Book data received for visualization:', response)
     bookTitle.value = response.metadata.title.values
-    bookData.value = response
     return response
   } catch (err) {
     console.error('Erro ao carregar dados do livro:', err)
@@ -190,13 +169,6 @@ const fetchManifest = async (bookKey: string) => {
   }
 }
 
-// Get page image URL (fallback method)
-const getPageImageUrl = (book: JoaninaItem, pageNumber: number): string => {
-  const baseUrl = book.cover.url.replace("{KEY}", book.cover.key).replace("{FILENAME}", "")
-  const pageNum = pageNumber.toString().padStart(4, '0')
-  return `${baseUrl}page_${pageNum}.jpg`
-}
-
 // Initialize Mirador with real IIIF manifest
 const initializeMirador = async () => {
   try {
@@ -206,77 +178,64 @@ const initializeMirador = async () => {
     // Fetch book data first
     const book = await fetchBookData()
     
-    if (!useMirador.value) {
-      loading.value = false
-      return
-    }
-    
     // Fetch IIIF manifest
     const { manifest, manifestUrl } = await fetchManifest(book.key)
     
-    // Try to load Mirador
-    try {
-      loadingMessage.value = 'Inicializando Mirador...'
-      const Mirador = await import('mirador')
-      
-      console.log('Initializing Mirador with manifest:', manifestUrl)
-      
-      // Initialize Mirador with the real IIIF manifest
-      miradorInstance.value = Mirador.viewer({
-        id: 'mirador-viewer',
-        manifests: {
-          [manifestUrl]: manifest
-        },
-        windows: [{
-          manifestId: manifestUrl,
-          canvasIndex: 0
-        }],
-        workspaceControlPanel: {
-          enabled: true
-        },
-        window: {
-          allowClose: false,
-          allowMaximize: true,
-          defaultSideBarPanel: 'info',
-          sideBarOpenByDefault: false,
-          panels: {
-            info: true,
-            attribution: true,
-            canvas: true,
-            annotations: false,
-            search: false
-          }
-        },
-        workspace: {
-          showZoomControls: true,
-          type: 'single'
-        },
-        thumbnailNavigation: {
-          defaultPosition: 'off'
-        }
-      })
-      
-      console.log('Mirador initialized successfully')
-    } catch (miradorError) {
-      console.error('Erro ao carregar Mirador, usando visualizador simples:', miradorError)
-      errorMessage.value = 'Erro ao carregar Mirador. Tentando visualizador alternativo...'
-      useMirador.value = false
+    // Load and initialize Mirador
+    loadingMessage.value = 'Inicializando Mirador...'
+    const Mirador = await import('mirador')
+    
+    console.log('Initializing Mirador with manifest:', manifestUrl)
+    
+    // Clear any existing Mirador instance
+    const viewerElement = document.getElementById('mirador-viewer')
+    if (viewerElement) {
+      viewerElement.innerHTML = ''
     }
     
+    // Initialize Mirador with the real IIIF manifest
+    miradorInstance.value = Mirador.viewer({
+      id: 'mirador-viewer',
+      manifests: {
+        [manifestUrl]: manifest
+      },
+      windows: [{
+        manifestId: manifestUrl,
+        canvasIndex: 0
+      }],
+      workspaceControlPanel: {
+        enabled: true
+      },
+      window: {
+        allowClose: false,
+        allowMaximize: true,
+        defaultSideBarPanel: 'info',
+        sideBarOpenByDefault: false,
+        panels: {
+          info: true,
+          attribution: true,
+          canvas: true,
+          annotations: false,
+          search: false
+        }
+      },
+      workspace: {
+        showZoomControls: true,
+        type: 'single'
+      },
+      thumbnailNavigation: {
+        defaultPosition: 'off'
+      }
+    })
+    
+    console.log('Mirador initialized successfully')
     loading.value = false
   } catch (err) {
-    console.error('Erro ao inicializar visualizador:', err)
+    console.error('Erro ao inicializar Mirador:', err)
     error.value = true
     errorMessage.value = err instanceof Error ? err.message : 'Erro desconhecido ao carregar o livro'
     loading.value = false
   }
-}
-
-// Retry with simple viewer
-const retryWithSimpleViewer = () => {
-  useMirador.value = false
-  error.value = false
-  initializeMirador()
 }
 
 // Toggle fullscreen
@@ -286,13 +245,6 @@ const toggleFullscreen = () => {
   } else {
     document.exitFullscreen()
   }
-}
-
-// Handle image errors
-const onImageError = (event: Event) => {
-  const img = event.target as HTMLImageElement
-  console.log('Image failed to load:', img.src)
-  img.style.display = 'none'
 }
 
 // Lifecycle
