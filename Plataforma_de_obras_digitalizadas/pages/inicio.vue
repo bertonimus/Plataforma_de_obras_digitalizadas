@@ -222,16 +222,43 @@ interface JoaninaItem {
   }
 }
 
+interface JoaninaResponse {
+  items: JoaninaItem[]
+  total: number
+  page: number
+  limit: number
+}
+
 // API functions
 const fetchItems = async (): Promise<JoaninaItem[]> => {
   try {
-    const response = await $fetch<JoaninaItem[]>('https://nexus.fw.dev.ucframework.pt/v1/digitalis/collections/joanina/items', { 
+    const response = await $fetch<JoaninaResponse>('https://nexus.fw.dev.ucframework.pt/v1/digitalis/collections/joanina/items', {
+      method: 'POST',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
+      },
+      body: {
+        items: {
+          filters: [],
+          pagination: {
+            current_page: 1,
+            active_limit: 500
+          }
+        },
+        filters: {
+          pagination: {
+            current_page: 1,
+            active_limit: 5,
+            sort: "count",
+            direction: "desc"
+          },
+          filter: null,
+          section: "basic"
+        }
       }
     })
-    return response
+    return response.items
   } catch (error) {
     console.error('Erro ao carregar itens da Biblioteca Joanina:', error)
     throw error
@@ -252,7 +279,7 @@ const stats = computed(() => {
     return {
       totalItems: 0,
       totalPages: 0,
-      totalSize: '0 TB'
+      totalSize: '0 MB'
     }
   }
 
