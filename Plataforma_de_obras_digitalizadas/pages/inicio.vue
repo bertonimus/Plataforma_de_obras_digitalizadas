@@ -48,7 +48,7 @@
             <p class="text-base leading-relaxed mb-4">
               Fruto do Projeto Joanina Digital, uma parceria entre a Universidade de Coimbra e a 
               Autoridade Literária de Sharjah, esta nova plataforma é uma porta aberta a um fundo 
-              patrimonial único de Livro Antigo da Biblioteca Joanina, constituído por impressos d...
+              patrimonial único de Livro Antigo da Biblioteca Joanina, constituído por impressos dos séculos XVI, XVII e XVIII.
             </p>
             <button class="inline-flex items-center text-amber-400 hover:text-amber-300 font-medium transition-colors group">
               Saber mais
@@ -62,21 +62,27 @@
           <div class="grid grid-cols-3 gap-8 mb-12">
             <div class="text-center">
               <div class="text-5xl md:text-6xl font-bold mb-2 text-white">
-                {{ pending ? '...' : formatNumber(stats.totalItems) }}
+                <span v-if="pending" class="animate-pulse">...</span>
+                <span v-else-if="error" class="text-red-400">--</span>
+                <span v-else>{{ formatNumber(stats.totalItems) }}</span>
               </div>
               <div class="text-amber-400 font-medium text-lg">Livros</div>
             </div>
             
             <div class="text-center">
               <div class="text-5xl md:text-6xl font-bold mb-2 text-white">
-                {{ pending ? '...' : formatNumber(stats.totalPages) }}
+                <span v-if="pending" class="animate-pulse">...</span>
+                <span v-else-if="error" class="text-red-400">--</span>
+                <span v-else>{{ formatNumber(stats.totalPages) }}</span>
               </div>
               <div class="text-amber-400 font-medium text-lg">Páginas</div>
             </div>
             
             <div class="text-center">
               <div class="text-5xl md:text-6xl font-bold mb-2 text-white">
-                {{ pending ? '...' : stats.totalSize }}
+                <span v-if="pending" class="animate-pulse">...</span>
+                <span v-else-if="error" class="text-red-400">--</span>
+                <span v-else>{{ stats.totalSize }}</span>
               </div>
               <div class="text-amber-400 font-medium text-lg">Ficheiros</div>
             </div>
@@ -176,35 +182,45 @@
 <script setup lang="ts">
 // Interfaces
 interface JoaninaItem {
- key:string
- type:string
- cover:{
-    key:string 
-    type:string
-    filename:string
-    title:string
-    url:string
-    token:string
-    url_format:string
-    thumb_filename:string
-    webp_filename:string
-    thumb_url:string
-    thumb_url_format:string
- }
-  stats:{
-    pages:number
+  key: string
+  type: string
+  cover: {
+    key: string 
+    type: string
+    filename: string
+    title: string
+    url: string
+    token: string
+    url_format: string
+    thumb_filename: string
+    webp_filename: string
+    thumb_url: string
+    thumb_url_format: string
   }
-  metadata:{
-    title:{
-      values:string
+  stats: {
+    pages: number
+  }
+  metadata: {
+    title: {
+      values: string
+    }
+    title_personal?: {
+      values: string
+    }
+    publication_date?: {
+      values: string[]
+    }
+    language_code?: {
+      values: string[]
+    }
+    hierarchical_place_name?: {
+      values: string
+    }
+    volume?: {
+      values: string
     }
   }
 }
-
-// Estado reativo
-const searchQuery = ref('')
-const currentPage = ref(1)
-const itemsPerPage = 20
 
 // API functions
 const fetchItems = async (): Promise<JoaninaItem[]> => {
@@ -224,23 +240,15 @@ const fetchItems = async (): Promise<JoaninaItem[]> => {
 
 // Data fetching
 const { data, pending, error, refresh } = await useLazyAsyncData(
-  'joanina-items',
-  () => fetchItems(),
-  {
-    watch: [currentPage, searchQuery]
-  }
+  'joanina-items-inicio',
+  () => fetchItems()
 )
 
 // Computed properties
 const displayedItems = computed(() => data.value || [])
 
-const totalPages = computed(() => {
-  if (!data.value) return 1
-  return Math.ceil(data.value.length / itemsPerPage)
-})
-
 const stats = computed(() => {
-  if (!data.value) {
+  if (!data.value || data.value.length === 0) {
     return {
       totalItems: 0,
       totalPages: 0,
@@ -248,15 +256,33 @@ const stats = computed(() => {
     }
   }
 
-  const totalItems = data.value.length
-  const estimatedPages = totalItems * 500 // Estimativa de páginas por livro
-  const estimatedSizeGB = totalItems * 50 // Estimativa de MB por livro
-  const estimatedSizeTB = (estimatedSizeGB / 1024).toFixed(2)
+  const items = data.value
+  const totalItems = items.length
+  
+  // Calcular total de páginas somando as páginas de todos os livros
+  const totalPages = items.reduce((sum, item) => {
+    return sum + (item.stats?.pages || 0)
+  }, 0)
+  
+  // Calcular tamanho estimado baseado no número de páginas
+  // Estimativa: cada página digitalizada = ~2MB (alta qualidade)
+  const estimatedSizeMB = totalPages * 2
+  const estimatedSizeGB = estimatedSizeMB / 1024
+  const estimatedSizeTB = estimatedSizeGB / 1024
+  
+  let sizeDisplay: string
+  if (estimatedSizeTB >= 1) {
+    sizeDisplay = `${estimatedSizeTB.toFixed(2)} TB`
+  } else if (estimatedSizeGB >= 1) {
+    sizeDisplay = `${estimatedSizeGB.toFixed(2)} GB`
+  } else {
+    sizeDisplay = `${estimatedSizeMB.toFixed(0)} MB`
+  }
 
   return {
     totalItems,
-    totalPages: estimatedPages,
-    totalSize: `${estimatedSizeTB} TB`
+    totalPages,
+    totalSize: sizeDisplay
   }
 })
 
@@ -266,7 +292,7 @@ const formatNumber = (num: number): string => {
 }
 
 const getItemThumbnail = (item: JoaninaItem): string | undefined => {
-  if (item.cover) {
+  if (item.cover && item.cover.url && item.cover.key && item.cover.filename) {
     return item.cover.url.replace("{KEY}", item.cover.key).replace("{FILENAME}", item.cover.filename)
   }
   return undefined
