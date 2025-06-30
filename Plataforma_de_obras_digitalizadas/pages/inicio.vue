@@ -120,6 +120,7 @@
           <div class="text-red-400 mb-4">
             <h3 class="text-xl font-semibold mb-2">Erro ao carregar itens</h3>
             <p class="text-gray-400">Não foi possível carregar os itens da biblioteca.</p>
+            <p class="text-gray-500 text-sm mt-2">{{ error }}</p>
           </div>
           <button 
             @click="refresh()"
@@ -258,7 +259,19 @@ const fetchItems = async (): Promise<JoaninaItem[]> => {
         }
       }
     })
-    return response.items
+    
+    console.log('API Response:', response)
+    
+    // Verificar se a resposta tem a estrutura esperada
+    if (response && Array.isArray(response.items)) {
+      return response.items
+    } else if (Array.isArray(response)) {
+      // Se a resposta for diretamente um array
+      return response
+    } else {
+      console.error('Resposta da API não tem a estrutura esperada:', response)
+      return []
+    }
   } catch (error) {
     console.error('Erro ao carregar itens da Biblioteca Joanina:', error)
     throw error
@@ -272,10 +285,14 @@ const { data, pending, error, refresh } = await useLazyAsyncData(
 )
 
 // Computed properties
-const displayedItems = computed(() => data.value || [])
+const displayedItems = computed(() => {
+  if (!data.value) return []
+  return Array.isArray(data.value) ? data.value : []
+})
 
 const stats = computed(() => {
-  if (!data.value || data.value.length === 0) {
+  // Verificar se temos dados válidos
+  if (!data.value || !Array.isArray(data.value) || data.value.length === 0) {
     return {
       totalItems: 0,
       totalPages: 0,
@@ -287,8 +304,10 @@ const stats = computed(() => {
   const totalItems = items.length
   
   // Calcular total de páginas somando as páginas de todos os livros
-  const totalPages = items.reduce((sum, item) => {
-    return sum + (item.stats?.pages || 0)
+  // Usar verificação adicional para garantir que items é um array
+  const totalPages = items.reduce((sum: number, item: JoaninaItem) => {
+    const pages = item?.stats?.pages || 0
+    return sum + pages
   }, 0)
   
   // Calcular tamanho estimado baseado no número de páginas
@@ -319,7 +338,7 @@ const formatNumber = (num: number): string => {
 }
 
 const getItemThumbnail = (item: JoaninaItem): string | undefined => {
-  if (item.cover && item.cover.url && item.cover.key && item.cover.filename) {
+  if (item?.cover && item.cover.url && item.cover.key && item.cover.filename) {
     return item.cover.url.replace("{KEY}", item.cover.key).replace("{FILENAME}", item.cover.filename)
   }
   return undefined
