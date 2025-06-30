@@ -72,43 +72,6 @@
         </div>
       </div>
 
-      <!-- Recent Items Preview -->
-      <div v-if="!pending && !error && displayedItems.length > 0" class="mt-16">
-        <h3 class="text-2xl font-bold text-[#E6B449] mb-8">Itens Recentes</h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
-          <div
-            v-for="item in displayedItems.slice(0, 5)" 
-            :key="item.key"
-            class="group cursor-pointer transform transition-all duration-300 hover:scale-105"
-          >
-            <div class="bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-700 transition-colors duration-300">
-              <div class="relative h-48 bg-gradient-to-br from-amber-100 to-orange-200 overflow-hidden">
-                <img 
-                  :src="getItemThumbnail(item)" 
-                  :alt="item.metadata.title.values"
-                  class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                  @error="onImageError"
-                />
-                <div v-if="!getItemThumbnail(item)" class="w-full h-full flex items-center justify-center bg-amber-100">
-                  <div class="text-center text-amber-800 p-4">
-                    <svg class="w-12 h-12 mx-auto mb-2 opacity-50" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"></path>
-                    </svg>
-                    <p class="text-xs font-medium">{{ item.metadata.title.values.substring(0, 20) }}...</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div class="p-3">
-                <h4 class="font-semibold text-white text-sm line-clamp-2 group-hover:text-[#E6B449] transition-colors">
-                  {{ item.metadata.title.values }}
-                </h4>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <!-- Error State -->
       <div v-if="error" class="mt-16 text-center">
         <div class="text-red-400 mb-4">
@@ -251,11 +214,6 @@ const { data, pending, error, refresh } = await useLazyAsyncData(
 )
 
 // Computed properties
-const displayedItems = computed(() => {
-  if (!data.value) return []
-  return Array.isArray(data.value) ? data.value : []
-})
-
 const stats = computed(() => {
   // Verificar se temos dados válidos
   if (!data.value || !Array.isArray(data.value) || data.value.length === 0) {
@@ -302,21 +260,6 @@ const formatNumber = (num: number): string => {
   return new Intl.NumberFormat('pt-PT').format(num)
 }
 
-const getItemThumbnail = (item: JoaninaItem): string | undefined => {
-  if (item?.cover && item.cover.url && item.cover.key && item.cover.filename) {
-    return item.cover.url.replace("{KEY}", item.cover.key).replace("{FILENAME}", item.cover.filename)
-  }
-  return undefined
-}
-
-const onImageError = (event: Event) => {
-  const img = event.target as HTMLImageElement
-  const parent = img.parentElement
-  if (parent) {
-    img.style.display = 'none'
-  }
-}
-
 // SEO
 useHead({
   title: 'Biblioteca Digital Joanina - Página Inicial',
@@ -325,12 +268,3 @@ useHead({
   ]
 })
 </script>
-
-<style scoped>
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-</style>
