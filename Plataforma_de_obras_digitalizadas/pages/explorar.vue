@@ -637,7 +637,7 @@ const fetchItems = async (): Promise<JoaninaItem[]> => {
           ],
           pagination: {
             current_page: 1,
-            active_limit: 30
+            active_limit: 500
           }
         },
         filters: {
