@@ -29,15 +29,27 @@
           <!-- Stats -->
           <div class="grid grid-cols-3 gap-8 mt-12">
             <div>
-              <div class="text-3xl font-bold">141</div>
+              <div class="text-3xl font-bold">
+                <span v-if="pending" class="animate-pulse">...</span>
+                <span v-else-if="error" class="text-red-400">--</span>
+                <span v-else>{{ formatNumber(stats.totalItems) }}</span>
+              </div>
               <div class="text-gray-400">Itens</div>
             </div>
             <div>
-              <div class="text-3xl font-bold">69528</div>
+              <div class="text-3xl font-bold">
+                <span v-if="pending" class="animate-pulse">...</span>
+                <span v-else-if="error" class="text-red-400">--</span>
+                <span v-else>{{ formatNumber(stats.totalPages) }}</span>
+              </div>
               <div class="text-gray-400">Páginas</div>
             </div>
             <div>
-              <div class="text-3xl font-bold">4.67 TB</div>
+              <div class="text-3xl font-bold">
+                <span v-if="pending" class="animate-pulse">...</span>
+                <span v-else-if="error" class="text-red-400">--</span>
+                <span v-else>{{ stats.totalSize }}</span>
+              </div>
               <div class="text-gray-400">Ficheiros</div>
             </div>
           </div>
@@ -59,6 +71,20 @@
           />
         </div>
       </div>
+
+      <!-- Error State -->
+      <div v-if="error" class="mt-16 text-center">
+        <div class="text-red-400 mb-4">
+          <h3 class="text-xl font-semibold mb-2">Erro ao carregar dados</h3>
+          <p class="text-gray-400">{{ error }}</p>
+        </div>
+        <button 
+          @click="refresh()"
+          class="bg-[#E6B449] text-black px-6 py-2 rounded-md font-semibold hover:bg-[#d4a543] transition-colors"
+        >
+          Tentar novamente
+        </button>
+      </div>
     </main>
 
     <!-- Footer -->
@@ -68,14 +94,172 @@
           <div class="mb-4 md:mb-0">
             UC DIGITALIS v by UC Framework © Universidade de Coimbra
           </div>
-          <div class="flex space-x-4">
-            <a href="#" class="hover:text-white">Contacto</a>
-            <a href="#" class="hover:text-white">Canal de Denúncia</a>
-            <a href="#" class="hover:text-white">Elogios, Sugestões e Reclamações</a>
-            <a href="#" class="hover:text-white">Proteção de Dados</a>
-          </div>
+         
         </div>
       </div>
     </footer>
   </div>
 </template>
+
+<script setup lang="ts">
+// Interfaces
+interface JoaninaItem {
+  key: string
+  type: string
+  cover: {
+    key: string 
+    type: string
+    filename: string
+    title: string
+    url: string
+    token: string
+    url_format: string
+    thumb_filename: string
+    webp_filename: string
+    thumb_url: string
+    thumb_url_format: string
+  }
+  stats: {
+    pages: number
+  }
+  metadata: {
+    title: {
+      values: string
+    }
+    title_personal?: {
+      values: string
+    }
+    publication_date?: {
+      values: string[]
+    }
+    language_code?: {
+      values: string[]
+    }
+    hierarchical_place_name?: {
+      values: string
+    }
+    volume?: {
+      values: string
+    }
+  }
+}
+
+interface JoaninaResponse {
+  items: {
+    items: JoaninaItem[]
+    total: number
+    current_page: number
+    per_page: number
+  }
+}
+
+// API functions
+const fetchItems = async (): Promise<JoaninaItem[]> => {
+  try {
+    const response = await $fetch<JoaninaResponse>('https://nexus.fw.dev.ucframework.pt/v1/digitalis/collections/joanina/items', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: {
+        items: {
+          filters: [],
+          pagination: {
+            current_page: 1,
+            active_limit: 500
+          }
+        },
+        filters: {
+          pagination: {
+            current_page: 1,
+            active_limit: 5,
+            sort: "count",
+            direction: "desc"
+          },
+          filter: null,
+          section: "basic"
+        }
+      }
+    })
+    
+    console.log('API Response:', response)
+    
+    // Verificar se a resposta tem a estrutura esperada
+    if (response?.items?.items && Array.isArray(response.items.items)) {
+      return response.items.items
+    } else if (response?.items && Array.isArray(response.items)) {
+      return response.items
+    } else if (Array.isArray(response)) {
+      return response
+    } else {
+      console.error('Resposta da API não tem a estrutura esperada:', response)
+      return []
+    }
+  } catch (error) {
+    console.error('Erro ao carregar itens da Biblioteca Joanina:', error)
+    throw error
+  }
+}
+
+// Data fetching
+const { data, pending, error, refresh } = await useLazyAsyncData(
+  'joanina-items-index',
+  () => fetchItems()
+)
+
+// Computed properties
+const stats = computed(() => {
+  // Verificar se temos dados válidos
+  if (!data.value || !Array.isArray(data.value) || data.value.length === 0) {
+    return {
+      totalItems: 0,
+      totalPages: 0,
+      totalSize: '0 MB'
+    }
+  }
+
+  const items = data.value
+  const totalItems = items.length
+  
+  // Calcular total de páginas somando as páginas de todos os livros
+  const totalPages = items.reduce((sum: number, item: JoaninaItem) => {
+    const pages = item?.stats?.pages || 0
+    return sum + pages
+  }, 0)
+  
+  // Calcular tamanho estimado baseado no número de páginas
+  // Estimativa: cada página digitalizada = ~2MB (alta qualidade)
+  const estimatedSizeMB = totalPages * 2
+  const estimatedSizeGB = estimatedSizeMB / 1024
+  const estimatedSizeTB = estimatedSizeGB / 1024
+  
+  let sizeDisplay: string
+  if (estimatedSizeTB >= 1) {
+    sizeDisplay = `${estimatedSizeTB.toFixed(2)} TB`
+  } else if (estimatedSizeGB >= 1) {
+    sizeDisplay = `${estimatedSizeGB.toFixed(2)} GB`
+  } else {
+    sizeDisplay = `${estimatedSizeMB.toFixed(0)} MB`
+  }
+
+  return {
+    totalItems,
+    totalPages,
+    totalSize: sizeDisplay
+  }
+})
+
+// Methods
+const formatNumber = (num: number): string => {
+  return new Intl.NumberFormat('pt-PT').format(num)
+}
+
+// SEO
+useHead({
+  title: 'Biblioteca Digital Joanina - Página Inicial',
+  meta: [
+    { name: 'description', content: 'Acesso aberto aos tesouros do fundo patrimonial da Biblioteca Joanina. Explore nossa coleção digital de livros antigos.' }
+  ]
+})
+</script>
